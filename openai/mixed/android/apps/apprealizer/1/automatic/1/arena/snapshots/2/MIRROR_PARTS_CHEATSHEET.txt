@@ -1,0 +1,364 @@
+MIRROR PARTS CHEATSHEET
+=======================
+
+This is a practical index for the `/2` proposal. Use `mirror.*` from JavaScript.
+Most methods return old compact strings:
+
+    OK          success/no value
+    E:...       error
+    V...        primitive/string JSON value follows after V
+    P<number>   native object handle
+
+The newer preferred API `mirror.exec(...)` returns JSON directly.
+
+Primary unified API
+-------------------
+
+mirror.exec(jsonString)
+    Runs a unified transaction.
+
+    Example:
+        mirror.exec(JSON.stringify({
+          capabilities: true,
+          observe: ['screen','events','notifications'],
+          act: [ { tap:[100,200] }, { say:'done' } ],
+          returnEvents: true
+        }))
+
+mirror.execAsync(jsonString, cbId)
+    Runs exec on a background thread and calls window.onC(cbId, result).
+
+mirror.caps()
+    Returns V + capability JSON.
+
+mirror.events(jsonString)
+    Returns V + event state JSON.
+
+mirror.run(text), mirror.e(text), mirror.r(text), mirror.flow(text)
+    Human-readable flow commands. Example:
+        mirror.run(`
+        launch com.android.chrome
+        waitFor Google
+        playClick Search
+        `)
+
+Boot document
+-------------
+
+mirror.boot(html, reload)
+    Sets editable boot HTML. Persists in local preferences. If reload=true, loads it.
+
+mirror.bootGet()
+    Returns V + current boot HTML.
+
+mirror.bootReset(reload)
+    Clears local override and resets to fallback literal.
+
+Java/Kotlin reflection
+----------------------
+
+mirror.c(className)
+    Class.forName / primitive/array aware. Returns P handle.
+
+mirror.cl()
+    Returns app classloader handle.
+
+mirror.c2(loaderHandle, className)
+    Load class through a classloader handle.
+
+mirror.n(className, jsonArgs)
+    Construct object.
+
+mirror.x(handle, methodName, jsonArgs)
+    Invoke method.
+
+mirror.u(handle, methodName, jsonArgs, cbId)
+    Invoke and callback.
+
+mirror.g(handle, field)
+    Get field.
+
+mirror.s(handle, field, jsonValue)
+    Set field.
+
+mirror.a(typeName, length)
+    New array.
+
+mirror.p(interfaceName, callbackId)
+    Create Java proxy for interface; callbacks go to window.onL.
+
+mirror.kc(className), mirror.kco(handle), mirror.kinfo(handle), mirror.jinfo(handle)
+    Kotlin/Java class handles and info.
+
+mirror.type(handle), mirror.get(handle), mirror.str(value), mirror.del(handle)
+    Handle helpers.
+
+Pages / tabs / workers
+----------------------
+
+mirror.pageOpen(id, src, kind, visible)
+    kind: html, url, base64.
+
+mirror.pageEval(id, js, cbId)
+    Evaluate JS in page, callback result.
+
+mirror.pageShow(id)
+    Show a page and hide others.
+
+mirror.pageClose(id)
+    Destroy page.
+
+mirror.pageList()
+    Returns V + JSON array of page ids.
+
+Example:
+    mirror.pageOpen('worker', '<script>function f(){return 5}</script>', 'html', false)
+    mirror.pageEval('worker', 'f()', 8)
+
+Accessibility / app playing
+---------------------------
+
+mirror.svc()
+    Returns AccessibilityService handle if enabled.
+
+mirror.currentApp()
+    Returns current active package from accessibility root.
+
+mirror.waitFor(query, ms)
+    Wait until a screen node contains query.
+
+mirror.playClick(query, ms)
+    Wait then click node containing query.
+
+Via service reflection or exec actions:
+    tap [x,y]
+    swipe [x1,y1,x2,y2,ms]
+    click query
+    input [query,text]
+    back/home/recents/notifications
+
+Example:
+    mirror.exec(JSON.stringify({act:[
+      {launch:'com.android.chrome'},
+      {waitFor:{q:'Google',ms:5000}},
+      {playClick:{q:'Search',ms:5000}}
+    ]}))
+
+Intents / browser / Chrome
+--------------------------
+
+mirror.open(uri)
+    ACTION_VIEW uri.
+
+mirror.openIn(pkg, uri)
+    Open URI targeted to package, e.g. Chrome.
+
+mirror.launch(packageName)
+    Launch app package.
+
+mirror.share(text, mime)
+    Android share sheet.
+
+mirror.choose(action, uri, mime, extrasJson)
+    Android chooser.
+
+mirror.resolveIntent(action, uri, mime, pkg, cls, extras, cats, flags)
+    Returns matching activities.
+
+mirror.canIntent(...)
+    Returns whether intent can resolve.
+
+mirror.startEx(action, uri, mime, pkg, cls, extras, cats, flags)
+    Full intent start.
+
+Native fetch / CORS helper
+--------------------------
+
+mirror.fetch(url, method, headersJson, body, timeoutMs, cleanTracking, sensitiveUnused, maxBytes)
+    Returns V + JSON:
+        { url, code, type, headers, text, base64 }
+
+Headers are controlled by HTML. Cookie/Authorization are not blocked by native.
+
+Example:
+    mirror.fetch('https://api.example.com','GET','{"Authorization":"Bearer x"}','',15000,true,true,2000000)
+
+Shell / process / root / adb
+----------------------------
+
+mirror.sh(cmd, input, timeoutMs)
+    One-shot shell as app UID.
+
+mirror.sys(mode, cmd, input, timeoutMs)
+    mode: sh, su/root, adb, or custom prefix.
+
+Unified process sessions through exec:
+    mirror.exec({process:{start:'sh',cwd:'/sdcard'}})
+    mirror.exec({process:{id:1,write:'ls\n'}})
+    mirror.exec({process:{read:1,clear:true}})
+    mirror.exec({process:{kill:1}})
+
+MediaProjection / frames
+------------------------
+
+mirror.mp(cbId)
+    Request screen-capture consent. Callback gets result/data handle.
+
+mirror.mpStart(w,h,dpi)
+    Start MediaProjection after consent. Use 0,0,0 for display defaults.
+
+mirror.mpFrame(l,t,r,b,maxW,quality)
+    Old JPEG crop base64.
+
+mirror.mpFrameEx(l,t,r,b,maxW,quality,format)
+    Formats:
+        jpg, png, gray, rgba, raw, filejpg, filepng, filegray, fileraw
+
+mirror.mpStreamStart(configJson, cbId)
+    Push frame payloads to window.onC callback.
+
+mirror.mpStreamStop()
+    Stop callback stream.
+
+mirror.framePipeStart(configJson, cbId)
+    Start ring-buffer frame data plane. Config:
+        {l,t,r,b,maxW,quality,format,fps,slots}
+
+mirror.framePipeInfo(id)
+    Returns V + latest meta JSON.
+
+mirror.framePipeStop(id)
+    Stop one pipe. id=0 stops all.
+
+mirror.mpStop()
+    Stop stream/projection/resources.
+
+Recommended for ML:
+    format='gray', maxW small, fps 15-30, slots 3.
+
+Recommended for remote help/video share:
+    format='jpg' or 'filejpg', maxW 360-720, fps 10-20.
+
+Accessibility screenshot
+------------------------
+
+mirror.screenshot(l,t,r,b,maxW,quality)
+    Uses AccessibilityService screenshot API on Android 11+.
+    Useful for occasional screenshots if MediaProjection is not active.
+
+Sensors / speech / notifications
+--------------------------------
+
+mirror.sensor(type, delay, cbId)
+    Register Android sensor. Callback receives JSON values.
+    Heart rate is usually type 21 if supported and permission granted.
+
+mirror.sensorStop(id)
+    Stop sensor.
+
+mirror.say(text)
+    TextToSpeech.
+
+mirror.listen(cbId, lang, prompt)
+    SpeechRecognizer one-shot listen.
+
+mirror.stopListen()
+    Stop speech recognition.
+
+mirror.notify(id, title, text)
+    Post notification.
+
+mirror.notis(max)
+    Notification listener event queue.
+
+Storage / profile
+-----------------
+
+mirror.save(key, value, zip)
+    SharedPreferences small storage.
+
+mirror.load(key, zip)
+    Load small storage.
+
+mirror.rm(key)
+    Remove.
+
+mirror.keys(prefix)
+    List keys.
+
+mirror.zip(text), mirror.unzip(base64Gzip)
+    GZIP/Base64 helpers.
+
+mirror.fw(name, value, zip)
+    Write app file text, optionally gzipped.
+
+mirror.fr(name, zip)
+    Read app file text, optionally gunzipped.
+
+Clipboard / vibration / time
+----------------------------
+
+mirror.clip(text)
+mirror.getClip()
+mirror.vibe(ms)
+mirror.toast(text)
+mirror.now()
+mirror.later(ms, cbId, value)
+
+Foreground / lifetime
+---------------------
+
+mirror.fg(true)
+    Start foreground BridgeService.
+
+mirror.fg(false)
+    Stop foreground service.
+
+mirror.alarm(ms, value)
+    Schedule alarm to reopen app with payload.
+
+mirror.lastIntent()
+    Last intent payload JSON.
+
+USB
+---
+
+mirror.usb()
+    Returns UsbManager handle.
+
+mirror.usbList()
+    Returns V + connected USB device summary.
+
+Dynamic extension
+-----------------
+
+mirror.dex(path, optDir, libDir)
+    Load external dex/jar/apk through DexClassLoader. Returns loader handle.
+
+mirror.lib(pathOrName, abs)
+    System.load or System.loadLibrary.
+
+Common patterns
+---------------
+
+1. App tester:
+    mirror.exec({observe:['screen'],act:[{click:'OK'},{input:['Name','Alice']}],returnEvents:true})
+
+2. Chrome player:
+    mirror.exec({act:[{openIn:{pkg:'com.android.chrome',uri:'https://google.com'}},{waitFor:{q:'Google',ms:5000}}]})
+
+3. Vision AI:
+    mirror.mp(1); mirror.mpStart(0,0,0);
+    const pipe = mirror.framePipeStart(JSON.stringify({l:0,t:0,r:720,b:1280,maxW:128,format:'gray',fps:30,slots:3}),0)
+
+4. Video chat:
+    HTML uses getUserMedia + RTCPeerConnection. mirror provides camera/mic permission and optional screen frame pipe.
+
+5. PC bridge:
+    HTML transport receives JSON command packets, runs mirror.exec(packet), returns result.
+
+6. Termux-like:
+    Use process sessions for persistent shell, sys('su') for root if available, sys('adb') for adb if available.
+
+7. Self-modification:
+    mirror.boot(newHtml,true), pageOpen/pageClose, framePipeStop, sensorStop, procKill.

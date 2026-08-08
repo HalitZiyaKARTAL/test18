@@ -1,0 +1,163 @@
+MIRROR /4 FRACTAL OPS EXAMPLES
+==============================
+
+/4 adds the first practical step toward the manifest-first/fractal design:
+manifest/resource introspection plus a generic op dispatcher.
+
+New direct bridge calls
+-----------------------
+
+mirror.manifest()
+    Returns V + manifest/package declaration info:
+    permissions, features, activities, services, receivers, providers.
+
+mirror.resources()
+    Returns V + currently running/open resource info:
+    pages, processes, framePipes, sensors, handles, MediaProjection state, speech, foreground, accessibility.
+
+mirror.root(name)
+    Generic root/system-service handle getter.
+
+    Examples:
+      mirror.root('activity')
+      mirror.root('package')
+      mirror.root('content')
+      mirror.root('sensor')
+      mirror.root('usb')
+      mirror.root('mediaProjection')
+      mirror.root('accessibility')
+      mirror.root('page:main')
+
+mirror.permissionRequest('["android.permission.CAMERA"]', cbId)
+    Generic runtime permission request. Result goes to window.onC(cbId,...).
+
+mirror.requireCaps('["accessibility","mediaProjection","android.permission.CAMERA"]')
+    Returns V + status/fix info for requested powers.
+
+mirror.stop(target)
+    Generic cleanup by resource target.
+
+    Examples:
+      mirror.stop('frame:*')
+      mirror.stop('sensor:*')
+      mirror.stop('process:*')
+      mirror.stop('page:*')
+      mirror.stop('mediaProjection')
+      mirror.stop('foreground')
+      mirror.stop('all')
+
+New exec integrations
+---------------------
+
+mirror.exec(JSON.stringify({
+  capabilities: true,
+  manifest: true,
+  resources: true,
+  require: ['accessibility', 'mediaProjection', 'android.permission.CAMERA']
+}))
+
+Generic ops are available through:
+
+mirror.exec(JSON.stringify({
+  ops: [
+    { op: 'read', target: 'mirror:caps' },
+    { op: 'read', target: 'mirror:manifest' },
+    { op: 'read', target: 'mirror:resources' },
+    { op: 'read', target: 'mirror:events', max: 50 }
+  ]
+}))
+
+Examples by resource type
+-------------------------
+
+Open a page:
+
+mirror.exec(JSON.stringify({
+  ops: [
+    { op: 'open', target: 'page:worker', data: { html: '<script>1+1</script>', kind: 'html', visible: false } }
+  ]
+}))
+
+Evaluate/write to a page:
+
+mirror.exec(JSON.stringify({
+  ops: [
+    { op: 'write', target: 'page:worker', data: { eval: 'document.title', cb: 7 } }
+  ]
+}))
+
+Start a process:
+
+mirror.exec(JSON.stringify({
+  ops: [
+    { op: 'open', target: 'process:sh1', data: { cmd: 'sh', cwd: '/sdcard' } }
+  ]
+}))
+
+Write/read process:
+
+mirror.exec(JSON.stringify({
+  ops: [
+    { op: 'write', target: 'process:1', data: 'ls\n' },
+    { op: 'read', target: 'process:1', clear: true }
+  ]
+}))
+
+Start frame pipe:
+
+mirror.exec(JSON.stringify({
+  ops: [
+    { op: 'open', target: 'frame:vision', data: { l: 0, t: 0, r: 500, b: 500, maxW: 160, format: 'gray', fps: 30, slots: 3 } }
+  ]
+}))
+
+Read frame pipe info:
+
+mirror.exec(JSON.stringify({
+  ops: [
+    { op: 'read', target: 'frame:1' }
+  ]
+}))
+
+Send gesture through generic input target:
+
+mirror.exec(JSON.stringify({
+  ops: [
+    { op: 'write', target: 'input:auto', data: { gesture: [ { points: [[100,200],[200,300]], start: 0, duration: 250 } ] } }
+  ]
+}))
+
+Write/read file:
+
+mirror.exec(JSON.stringify({
+  ops: [
+    { op: 'write', target: 'file:profile.json', data: '{"ok":true}' },
+    { op: 'read', target: 'file:profile.json' }
+  ]
+}))
+
+Stop heavy resources:
+
+mirror.exec(JSON.stringify({
+  stop: ['frame:*', 'sensor:*', 'process:*']
+}))
+
+Design meaning
+--------------
+
+This is not the final full graph system, but it starts the intended pattern:
+
+    op + target + data
+
+Targets are address-like:
+
+    mirror:caps
+    mirror:resources
+    page:worker
+    process:1
+    frame:1
+    file:profile.json
+    input:auto
+    handle:42
+
+Future adapters should plug into this shape instead of adding one-off product methods.

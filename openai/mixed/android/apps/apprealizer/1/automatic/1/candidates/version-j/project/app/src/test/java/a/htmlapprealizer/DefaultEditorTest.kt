@@ -1,0 +1,11 @@
+package a.htmlapprealizer
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class DefaultEditorTest {
+    @Test fun defaultEditorIsConstitutionByteForByte() {
+        val required = "<!DOCTYPE html><title>HTML Realizer</title><style>body{margin:0;padding:4px;background:#111;font-family:monospace}div{min-height:40vh;background:#222;color:#eee;border:solid #444;padding:8px;white-space:pre-wrap;margin-bottom:4px;overflow:auto}button{border:0;background:#058;color:#fff;width:100%;height:5vh;font-size:2vh}</style><div id=i contenteditable=\"plaintext-only\" oninput=\"c.textContent=i.textContent.length\"></div><button onclick=\"var code=i.textContent;document.open();document.write(code);document.close()\">Realize (<b id=c>0</b> characters)</button>\n"
+        assertEquals(required.toByteArray(Charsets.UTF_8).toList(), Core.DEFAULT_EDITOR.toByteArray(Charsets.UTF_8).toList())
+    }
+}

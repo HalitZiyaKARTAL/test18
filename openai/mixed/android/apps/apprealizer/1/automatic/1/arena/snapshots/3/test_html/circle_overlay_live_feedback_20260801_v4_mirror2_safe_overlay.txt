@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Numbered Circle Overlay + Live Self-Feedback V4 mirror /2 Safe Overlay</title>
+  <style>
+    :root{color-scheme:dark;--bg:#080b10;--panel:#111722;--line:#2a3950;--muted:#9eabbc;--green:#138759;--blue:#245f9f;--red:#9e2837;--violet:#62459a}
+    *{box-sizing:border-box}
+    body{margin:0;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));background:var(--bg);color:#eef4fb;font:14px/1.4 system-ui,-apple-system,sans-serif}
+    main{width:min(100%,920px);margin:auto;display:grid;gap:11px}
+    h1{margin:0;font-size:clamp(20px,5vw,30px)}p{margin:3px 0 0;color:var(--muted)}
+    section,#status,.result{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    button,input,textarea{min-height:44px;border:1px solid #3b4c64;border-radius:10px;background:#182334;color:#f5f8fc;font:inherit;padding:8px}
+    button{font-weight:750;touch-action:manipulation}button:active{transform:translateY(1px)}button:disabled{opacity:.45}
+    .start,.live-on{background:var(--green)}.live-off{background:#394251}.self{background:#755514}.place{background:#8a5b16}.visual{background:var(--blue)}.hidden{background:#394251}.read{background:#285b78}.click{background:var(--red)}.both{background:var(--violet)}.danger{background:#641f29}
+    label{display:grid;gap:4px;color:var(--muted);font-size:11px}label input{font-size:14px;color:#fff}
+    #status{white-space:pre-wrap;color:#d6e7fb;min-height:52px}#status.error{border-color:#9b3947;background:#2a1419;color:#ffd2d7}
+    .state{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.state div{min-width:0;background:#0b1018;border:1px solid #253248;border-radius:10px;padding:8px}.state span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase}.state b{display:block;margin-top:3px;overflow-wrap:anywhere}
+    canvas{display:block;width:100%;max-height:58vh;object-fit:contain;background:#030506;border:1px solid #26344a;border-radius:11px;image-rendering:auto}
+    .live-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:8px}.live-metrics div{background:#0a0f16;border-radius:8px;padding:7px;overflow-wrap:anywhere}.live-metrics span{display:block;color:var(--muted);font-size:10px}.live-metrics b{display:block;margin-top:2px;font:650 12px ui-monospace,monospace}
+    #positions{display:grid;gap:7px}.position{display:grid;grid-template-columns:auto 1fr;gap:5px 10px;background:#0a0f16;border-radius:9px;padding:8px}.position strong{grid-row:span 2;color:#ff6472}.position span{color:var(--muted);font-size:11px}.position b{font:600 12px ui-monospace,monospace;overflow-wrap:anywhere}
+    #results{display:grid;gap:8px}.result h3{margin:0 0 6px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.stats div{background:#0a0f16;border-radius:8px;padding:7px;overflow-wrap:anywhere}.stats span{display:block;color:var(--muted);font-size:10px}.r{color:#ff6876}.g{color:#67e49b}.b{color:#71adff}
+    details{margin-top:7px;color:#b8c8da}pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 0;font:11px/1.35 ui-monospace,monospace}
+    textarea{width:100%;min-height:180px;max-height:45vh;resize:vertical;background:#05080d;color:#bfe7ca;font:11px/1.4 ui-monospace,monospace;white-space:pre;overflow:auto;user-select:text;-webkit-user-select:text}
+    .note{font-size:12px;color:#c8d4e3}.warn{color:#ffd080}
+    @media(max-width:680px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:1fr}.state,.live-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<main>
+  <header><h1>Numbered circle overlay + live feedback · mirror /2 safe overlay</h1><p>Drag in a real transparent overlay, see the current screen, visually recover every red ring, sample, and explicitly click.</p><p><b>mirror /2 migration:</b> uses <code>window.mirror</code>, creates a separate native WebView overlay, and never detaches the main app WebView.</p></header>
+
+  <section class="grid">
+    <button id="startOverlay" class="start">Start / show controller</button>
+    <button id="addCircle">+ Circle</button>
+    <button id="removeCircle">− Selected</button>
+    <button id="destroyOverlay" class="danger">Destroy overlays</button>
+    <label>Circle radius (dp)<input id="radius" type="number" min="12" max="100" step="1" value="34" inputmode="numeric"></label>
+    <label>Bridge password<input id="password" type="password" autocomplete="off" placeholder="Usually blank"></label>
+    <button id="accessibility">Accessibility settings</button>
+    <button id="calibrate">Self-locate rings now</button>
+  </section>
+
+  <section class="grid">
+    <button id="liveOn" class="live-on">LIVE VIEW ON</button>
+    <button id="liveOff" class="live-off">LIVE VIEW OFF</button>
+    <button id="feedbackOn" class="self">SELF-FEEDBACK ON</button>
+    <button id="feedbackOff" class="live-off">SELF-FEEDBACK OFF</button>
+    <label>Live interval (ms)<input id="liveInterval" type="number" min="1100" max="5000" step="50" value="1200" inputmode="numeric"></label>
+    <label>Preview width (px)<input id="previewWidth" type="number" min="240" max="900" step="20" value="500" inputmode="numeric"></label>
+  </section>
+
+  <section class="grid three" aria-label="Overlay visibility modes">
+    <button id="placeMode" class="place">PLACE · drag rings</button>
+    <button id="visualMode" class="visual">VISUAL · click-through</button>
+    <button id="hiddenMode" class="hidden">HIDDEN · nothing over phone</button>
+  </section>
+
+  <section class="grid three" aria-label="Selected circle actions">
+    <button id="readAction" class="read">READ RGB</button>
+    <button id="clickAction" class="click">CLICK</button>
+    <button id="bothAction" class="both">READ + CLICK</button>
+  </section>
+
+  <div class="state">
+    <div><span>Overlay mode</span><b id="modeState">HIDDEN</b></div>
+    <div><span>Circles</span><b id="circleCount">0</b></div>
+    <div><span>Selected</span><b id="selectedState">none</b></div>
+    <div><span>Action state</span><b id="actionState">idle</b></div>
+    <div><span>Live view</span><b id="liveState">OFF</b></div>
+    <div><span>Self-feedback</span><b id="feedbackState">OFF</b></div>
+    <div><span>Live frames</span><b id="frameState">0</b></div>
+    <div><span>Rings visually found</span><b id="foundState">0 / 0</b></div>
+  </div>
+
+  <div id="status" role="status">Ready. Nothing is over the phone until Start / show controller is pressed. mirror /2 build uses a separate native WebView overlay; the main page is never moved into WindowManager.</div>
+
+  <section>
+    <strong>Live screen view</strong>
+    <canvas id="livePreview" width="1" height="1" aria-label="Live downscaled screen view"></canvas>
+    <div class="live-metrics">
+      <div><span>Screen / preview</span><b id="liveDimensions">—</b></div>
+      <div><span>Frame rate</span><b id="liveRate">0 fps</b></div>
+      <div><span>Preview RGB sums</span><b id="liveRgb">0 / 0 / 0</b></div>
+      <div><span>Last feedback</span><b id="feedbackTime">never</b></div>
+    </div>
+    <p class="note">Live frames are downscaled JPEGs for responsiveness. Cyan marks are screenshot-measured ring positions; exact r/2r RGB reads still use full-resolution clean crops.</p>
+  </section>
+
+  <section>
+    <strong>Last exact locator / RGB crop</strong>
+    <canvas id="preview" width="1" height="1" aria-label="Last exact locator or RGB crop"></canvas>
+  </section>
+
+  <section><strong>Circle position feedback</strong><div id="positions"><p>No circles yet.</p></div></section>
+
+  <section><strong>Circle results</strong><div id="results"><p>No RGB reading yet.</p></div></section>
+
+  <section>
+    <div class="grid two"><button id="copyDebug">Copy debug</button><button id="saveDebug">Save debug .txt</button></div>
+    <textarea id="debugText" readonly wrap="off" spellcheck="false">Initializing…</textarea>
+  </section>
+
+  <section class="note">
+    <strong>Safety behavior</strong>
+    <p><b>PLACE</b> uses a transparent full-screen WebView so dragging is synchronous and reliable; it automatically becomes click-through <b>VISUAL</b> after 30 seconds. <b>HIDDEN</b> makes the controller and ring layer invisible and non-touchable. Live view and overlay visibility are separate; both start OFF/HIDDEN. A ring drag never clicks the app underneath.</p>
+    <p class="warn">Native emergency escape already present in the supplied app: press volume down → up → down → up within 5 seconds to disable its accessibility service. Android removes accessibility-service overlays when that service disconnects.</p>
+  </section>
+</main>
+
+<script>
+'use strict';
+log(1,7);var debuglogs;function log(f,c){let s;c==void 0&&!isNaN(f)&&([f,c]=(''+f).split('.').map(Number));(!debuglogs||!debuglogs["-1"])&&(s=2,debuglogs=Array(1997).fill().map(()=>[]),debuglogs["-1"]=[2],debuglogs["-2"]=[],debuglogs[0]=[0],debuglogs[999]=[0],[8,...Array(119).fill(20)].forEach((v,i)=>{debuglogs[0][0]+=v,debuglogs[i+1]=[v,...Array(v).fill(0)],debuglogs[1001+i]=[0],debuglogs[999].push(0),s+=v,debuglogs["-1"].push(s)}),debuglogs[998]=[0,1,...Array(debuglogs[0][0]).fill(1)],debuglogs[998][0]=debuglogs[998].filter(x=>!x).length-1,debuglogs[1000]=[0],log(1,1));if(debuglogs[998][1]&&(s=debuglogs["-1"][f-1]+c-1,debuglogs[998][0]==0||debuglogs[998][s])){debuglogs["-2"][s]||(debuglogs["-2"][s]=f+'.'+c,debuglogs[0].push(s),(debuglogs[0].length>debuglogs[0][0]+3||debuglogs[1000].length>1003||debuglogs[1000+f].length>103)&&[[0,'Sequential',debuglogs[0][0]],[1000,'Recent',1000],[1000+f,`Function ${f}`,100]].forEach(([a,t,l])=>debuglogs[a].length>l+3&&alert(`${t} overflow: ${debuglogs[a].length}, limit: ${l+3}`)));debuglogs[f][c]++;debuglogs[999][f]=++debuglogs[1000+f][0];debuglogs[1000][0]=++debuglogs[999][0];debuglogs[1000][(debuglogs[1000][0]%1000)+1]=debuglogs["-2"][s];debuglogs[1000+f][(debuglogs[1000+f][0]%100)+1]=c}};
+
+const byId=id=>document.getElementById(id);
+const ui={
+  start:byId('startOverlay'),add:byId('addCircle'),remove:byId('removeCircle'),destroy:byId('destroyOverlay'),radius:byId('radius'),password:byId('password'),accessibility:byId('accessibility'),calibrate:byId('calibrate'),
+  liveOn:byId('liveOn'),liveOff:byId('liveOff'),feedbackOn:byId('feedbackOn'),feedbackOff:byId('feedbackOff'),liveInterval:byId('liveInterval'),previewWidth:byId('previewWidth'),
+  place:byId('placeMode'),visual:byId('visualMode'),hidden:byId('hiddenMode'),read:byId('readAction'),click:byId('clickAction'),both:byId('bothAction'),
+  mode:byId('modeState'),count:byId('circleCount'),selected:byId('selectedState'),action:byId('actionState'),liveState:byId('liveState'),feedbackState:byId('feedbackState'),frameState:byId('frameState'),foundState:byId('foundState'),status:byId('status'),
+  livePreview:byId('livePreview'),liveDimensions:byId('liveDimensions'),liveRate:byId('liveRate'),liveRgb:byId('liveRgb'),feedbackTime:byId('feedbackTime'),preview:byId('preview'),positions:byId('positions'),results:byId('results'),debug:byId('debugText'),copy:byId('copyDebug'),save:byId('saveDebug')
+};
+const previewContext=ui.preview.getContext('2d',{willReadFrequently:true,colorSpace:'srgb'});
+const liveContext=ui.livePreview.getContext('2d',{willReadFrequently:true,colorSpace:'srgb'});
+const pendingCallbacks=new Map(),traceLines=[];
+const overlayEvaluations=new Map();
+const CALLBACK={SCREENSHOT:7102,REMOVE:8001,ADD:8002,PLACE:8003,VISUAL:8004,HIDDEN:8005,READ:8006,CLICK:8007,BOTH:8008,LIVE:8009,FEEDBACK:8010,EVALUATE:30000};
+const ANDROID={TYPE_ACCESSIBILITY_OVERLAY:2032,TRANSLUCENT:-3,NOT_FOCUSABLE:8,NOT_TOUCHABLE:16,LAYOUT_IN_SCREEN:256,TOP_LEFT:51,VISIBLE:0,INVISIBLE:4,WRAP_CONTENT:-2,MATCH_PARENT:-1,HORIZONTAL:0,VERTICAL:1,CENTER:17};
+const BASE_FLAGS=ANDROID.NOT_FOCUSABLE|ANDROID.LAYOUT_IN_SCREEN;
+const state={
+  native:null,overlayReady:false,overlayMode:'HIDDEN',ringLayer:null,circles:[],selectedId:null,nextId:1,busy:false,captureOwner:'',shot:null,lastScreenshotAt:0,density:1,screenWidth:0,screenHeight:0,
+  controller:null,placeTimer:0,debugTimer:0,lastError:'',lastResult:null,evaluationId:CALLBACmirror.EVALUATE,
+  live:{enabled:false,feedback:false,busy:false,timer:0,frames:0,lastFrameAt:0,found:0,lastFeedbackAt:'',lastStartedAt:0}
+};
+
+function setStatus(message,error=false){
+  log(2,error?2:1);ui.status.textContent=String(message);ui.status.classList.toggle('error',error);if(error)state.lastError=String(message);trace(error?'ERROR':'STATUS',message);renderState();
+}
+
+function trace(event,detail=''){
+  log(3,1);let text;try{text=typeof detail==='string'?detail:JSON.stringify(detail)}catch(error){log(3,2);text='[unserializable]'}
+  text=String(text??'');if(text.length>700){log(3,3);text=`${text.slice(0,700)}… [${text.length} chars]`}
+  traceLines.push(`${new Date().toISOString()} | ${event}${text?` | ${text}`:''}`);if(traceLines.length>180){log(3,4);traceLines.splice(0,traceLines.length-180)}scheduleDebug();log(3,5);
+}
+
+function scheduleDebug(){
+  log(4,1);if(state.debugTimer){log(4,2);return}state.debugTimer=setTimeout(()=>{log(4,3);state.debugTimer=0;ui.debug.value=buildDebugReport()},250);
+}
+
+function buildDebugReport(full=false){
+  log(5,1);const active=[];for(let f=1;f<1000;f++)if(debuglogs[f]?.slice(1).some(Boolean))active.push(`${f}: ${debuglogs[f].slice(1).join(',')}`);
+  const circles=state.circles.map(circle=>({id:circle.id,x:circle.x,y:circle.y,radius:circle.radius,selected:circle.id===state.selectedId,calibrated:circle.calibrated,result:circle.result}));log(5,2);
+  const report=[
+    'CIRCLE OVERLAY LIVE FEEDBACK V4 MIRROR DEBUG',`generatedAt: ${new Date().toISOString()}`,`bridgeDetected: ${!!window.mirror}`,`overlayReady: ${state.overlayReady}`,`overlayMode: ${state.overlayMode}`,`ringLayer: ${!!state.ringLayer}`,`busy: ${state.busy}`,`captureOwner: ${state.captureOwner||'none'}`,`liveEnabled: ${state.live.enabled}`,`selfFeedback: ${state.live.feedback}`,`liveBusy: ${state.live.busy}`,`liveFrames: ${state.live.frames}`,`liveFound: ${state.live.found}/${state.circles.length}`,`screen: ${state.screenWidth}x${state.screenHeight}`,`density: ${state.density}`,`selectedId: ${state.selectedId??'none'}`,`lastError: ${state.lastError||'none'}`,'',
+    'CIRCLES',JSON.stringify(circles,null,2),'','TRACE',traceLines.join('\n')||'(none)','',
+    'RECENT EXECUTION CODES',(debuglogs[1000]||[]).slice(1).filter(Boolean).join(' → ')||'(none)','',
+    'NONZERO FUNCTION COUNTERS',active.join('\n')||'(none)'
+  ].join('\n');log(5,3);return full?`${report}\n\nFULL DEBUGLOGS\n${JSON.stringify(debuglogs)}`:report;
+}
+
+async function copyDebug(){
+  log(6,1);if(state.ringLayer)try{await syncOverlayState()}catch(error){trace('DEBUG SYNC FAILED',error.message)}const report=buildDebugReport();ui.debug.value=report;let copied=false;
+  try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(report);copied=true;log(6,2)}}catch(error){log(6,3)}
+  if(!copied)try{ui.debug.focus();ui.debug.select();copied=document.execCommand('copy');log(6,copied?4:5)}catch(error){log(6,6)}
+  setStatus(copied?'Debug copied.':'Automatic copy was blocked; debug text is selected.',!copied);
+}
+
+function saveDebug(){
+  log(7,1);const blob=new Blob([buildDebugReport(true)],{type:'text/plain'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`circle_overlay_debug_${new Date().toISOString().replace(/[-:]/g,'').replace(/\..+$/,'Z')}.txt`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);setStatus('Debug .txt requested.');log(7,2);
+}
+
+function tokenHandle(token){
+  log(8,1);const match=/^P(\d+)$/.exec(String(token));if(!match){log(8,2);throw new Error(`Expected native handle, received ${token}`)}log(8,3);return Number(match[1]);
+}
+
+function nativeResult(result,operation){
+  log(9,1);result=String(result);if(result.startsWith('W:')){log(9,2);throw new Error(`${operation} needs native approval; use the middle OK button`)}if(result.startsWith('E:')){log(9,3);throw new Error(`${operation}: ${result}`)}log(9,4);return result;
+}
+
+function nativeValue(token){
+  log(10,1);token=String(token);if(token==='V'){log(10,2);return null}if(token[0]==='V'){log(10,3);return token.slice(1)}log(10,4);return token;
+}
+
+function nativeClass(name){log(11,1);return nativeResult(mirror.c(name),`class ${name}`)}
+function nativeNew(name,args=[]){log(12,1);return nativeResult(mirror.n(name,JSON.stringify(args)),`new ${name}`)}
+function nativeField(target,field){log(13,1);return nativeResult(mirror.g(tokenHandle(target),field),`field ${field}`)}
+function nativeSet(target,field,value){log(14,1);return nativeResult(mirror.s(tokenHandle(target),field,JSON.stringify(value)),`set ${field}`)}
+function nativeCall(target,method,args=[]){log(15,1);return nativeResult(mirror.x(typeof target==='number'?target:tokenHandle(target),method,JSON.stringify(args)),`call ${method}`)}
+function nativeProxy(name,id){log(16,1);return nativeResult(mirror.p(name,id),`proxy ${name}`)}
+
+function bridgeAsync(target,method,args=[]){
+  log(17,1);return new Promise((resolve,reject)=>{const id=20000+Math.floor(Math.random()*900000000),timeout=setTimeout(()=>{log(17,4);pendingCallbacks.delete(id);reject(new Error(`Native callback timed out: ${method}`))},45000);pendingCallbacks.set(id,{resolve,reject,timeout,method});
+    try{mirror.u(typeof target==='number'?target:tokenHandle(target),method,JSON.stringify(args),id);log(17,2)}catch(error){log(17,3);clearTimeout(timeout);pendingCallbacks.delete(id);reject(error)}
+  });
+}
+
+window.onC=function(id,result){
+  log(18,1);const pending=pendingCallbacks.get(Number(id));if(!pending){log(18,2);return}result=String(result);
+  if(result.startsWith('W:')){log(18,3);setStatus('Native approval dialog is open. Tap the middle OK button; this pending operation will then continue.');return}
+  clearTimeout(pending.timeout);pendingCallbacks.delete(Number(id));if(result.startsWith('E:')){log(18,4);pending.reject(new Error(`${pending.method}: ${result}`))}else{log(18,5);pending.resolve(result)}
+};
+
+function parseProxyArgs(rawArgs){
+  log(19,1);if(Array.isArray(rawArgs)){log(19,2);return rawArgs}const raw=String(rawArgs??'[]').trim();
+  try{const parsed=JSON.parse(raw);if(!Array.isArray(parsed))throw new Error('not an array');log(19,3);return parsed}catch(jsonError){log(19,4);const wrapper=/^\[([\s\S]*)\]$/.exec(raw),tokens=wrapper&&wrapper[1].trim()?wrapper[1].split(',').map(value=>value.trim()):[];if(wrapper&&tokens.every(value=>/^P\d+$/.test(value)||/^V(?:true|false|null|-?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)?$/i.test(value))){log(19,5);return tokens}throw new Error(`Unsupported proxy arguments: ${raw.slice(0,180)}; ${jsonError.message}`)}
+}
+
+window.onL=function(proxyId,method,rawArgs){
+  log(20,1);const id=Number(proxyId),name=String(method);let args=[];
+  try{
+    args=parseProxyArgs(rawArgs);
+    if(id===CALLBACmirror.SCREENSHOT){log(20,2);handleScreenshotCallback(name,args);return}
+    if(overlayEvaluations.has(id)){log(20,3);handleOverlayEvaluation(id,name,args);return}
+    log(20,4);args.forEach(dropToken);handleControllerButton(id)
+  }catch(error){log(20,5);args.forEach(dropToken);fail(error)}
+};
+
+function handleControllerButton(id){
+  log(21,1);const actions={
+    [CALLBACmirror.REMOVE]:()=>removeSelectedCircle(),[CALLBACmirror.ADD]:()=>spawnCircle(),[CALLBACmirror.PLACE]:()=>setOverlayMode('PLACE'),[CALLBACmirror.VISUAL]:()=>setOverlayMode('VISUAL'),[CALLBACmirror.HIDDEN]:()=>setOverlayMode('HIDDEN'),[CALLBACmirror.READ]:()=>runAction('READ'),[CALLBACmirror.CLICK]:()=>runAction('CLICK'),[CALLBACmirror.BOTH]:()=>runAction('READ_CLICK'),[CALLBACmirror.LIVE]:()=>setLiveView(!state.live.enabled),[CALLBACmirror.FEEDBACK]:()=>setSelfFeedback(!state.live.feedback)
+  };const action=actions[id];if(!action){log(21,2);return}log(21,3);Promise.resolve().then(action).catch(fail);
+}
+
+function delay(ms){log(22,1);return new Promise(resolve=>setTimeout(resolve,ms))}
+
+function dropToken(token){
+  log(23,1);try{if(window.mirror&&/^P\d+$/.test(String(token)))mirror.del(tokenHandle(token))}catch(error){log(23,2)}
+}
+
+async function allowNative(){
+  log(24,1);if(!window.mirror){log(24,2);throw new Error('App Realizer mirror bridge is missing. Realize this text inside the supplied app')}
+  if(!mirror.auth(ui.password.value||'')){log(24,3);throw new Error('Bridge password is incorrect')}
+  const probe=String(mirror.c('a.htmlapprealizer.GlobalService'));if(probe==='E:SEC'){log(24,4);throw new Error('Sandbox is ON. Turn Sandbox OFF in native settings')}if(probe.startsWith('E:'))throw new Error(probe);dropToken(probe);
+  await bridgeAsync(0,'getPackageName',[]);log(24,5);
+}
+
+async function prepareNative(){
+  log(25,1);if(state.native){log(25,2);await refreshMetrics();return state.native}await allowNative();
+  const serviceClass=nativeClass('a.htmlapprealizer.GlobalService'),service=nativeField(serviceClass,'instance');if(service==='V'){dropToken(serviceClass);log(25,3);throw new Error('Accessibility service is not enabled or connected')}
+  const windowManager=nativeCall(service,'getSystemService',['window']),executor=nativeCall(service,'getMainExecutor',[]),screenshotCallback=nativeProxy('android.accessibilityservice.AccessibilityService$TakeScreenshotCallback',CALLBACmirror.SCREENSHOT);
+  const bitmapClass=nativeClass('android.graphics.Bitmap'),formatClass=nativeClass('android.graphics.Bitmap$CompressFormat'),png=nativeField(formatClass,'PNG'),jpeg=nativeField(formatClass,'JPEG'),configClass=nativeClass('android.graphics.Bitmap$Config'),argb=nativeField(configClass,'ARGB_8888'),base64Class=nativeClass('android.util.Base64'),arrayClass=nativeClass('java.lang.reflect.Array');
+  state.native={serviceClass,service,windowManager,executor,screenshotCallback,bitmapClass,formatClass,png,jpeg,configClass,argb,base64Class,arrayClass};await refreshMetrics();trace('NATIVE READY',{density:state.density,screen:[state.screenWidth,state.screenHeight]});log(25,4);return state.native;
+}
+
+async function refreshMetrics(){
+  log(26,1);if(!state.native)return;let resources,metrics;try{resources=nativeCall(state.native.service,'getResources',[]);metrics=nativeCall(resources,'getDisplayMetrics',[]);const density=Number(nativeValue(nativeField(metrics,'density'))),width=Number(nativeValue(nativeField(metrics,'widthPixels'))),height=Number(nativeValue(nativeField(metrics,'heightPixels')));if(width&&height&&(width!==state.screenWidth||height!==state.screenHeight)){log(26,2);state.circles.forEach(circle=>circle.calibrated=null)}state.density=density||1;state.screenWidth=width||state.screenWidth;state.screenHeight=height||state.screenHeight;log(26,3)}finally{dropToken(metrics);dropToken(resources)}
+}
+
+function dp(value){log(27,1);return Math.max(1,Math.round(Number(value)*state.density))}
+
+function signedColor(value){log(28,1);const number=Number(value);return number>2147483647?number-4294967296:number}
+
+function createDrawable(shape,color,strokeWidth=0,strokeColor=0,radius=0){
+  log(29,1);const drawable=nativeNew('android.graphics.drawable.GradientDrawable',[]);nativeCall(drawable,'setShape',[shape]);nativeCall(drawable,'setColor',[signedColor(color)]);if(strokeWidth>0)nativeCall(drawable,'setStroke',[strokeWidth,signedColor(strokeColor)]);if(radius>0)nativeCall(drawable,'setCornerRadius',[radius]);log(29,2);return drawable;
+}
+
+function createWindowParams(width,height,x,y,flags){
+  log(30,1);const params=nativeNew('android.view.WindowManager$LayoutParams',[]);nativeSet(params,'width',width);nativeSet(params,'height',height);nativeSet(params,'type',ANDROID.TYPE_ACCESSIBILITY_OVERLAY);nativeSet(params,'flags',flags);nativeSet(params,'format',ANDROID.TRANSLUCENT);nativeSet(params,'gravity',ANDROID.TOP_LEFT);nativeSet(params,'x',Math.round(x));nativeSet(params,'y',Math.round(y));log(30,2);return params;
+}
+
+function styleButton(button,label,color){
+  log(31,1);nativeCall(button,'setText',[label]);nativeCall(button,'setTextColor',[signedColor(0xffffffff)]);nativeCall(button,'setTextSize',[10]);nativeCall(button,'setAllCaps',[false]);nativeCall(button,'setGravity',[ANDROID.CENTER]);nativeCall(button,'setPadding',[0,0,0,0]);nativeCall(button,'setMinimumWidth',[0]);nativeCall(button,'setMinWidth',[0]);nativeCall(button,'setMinimumHeight',[dp(40)]);nativeCall(button,'setBackgroundColor',[signedColor(color)]);log(31,2);
+}
+
+function addControllerButton(row,label,color,callbackId,retain=false){
+  log(32,1);const button=nativeNew('android.widget.Button',[state.native.service]),listener=nativeProxy('android.view.View$OnClickListener',callbackId),layout=nativeNew('android.widget.LinearLayout$LayoutParams',[0,dp(40),1]);styleButton(button,label,color);nativeCall(button,'setOnClickListener',[listener]);nativeCall(row,'addView',[button,layout]);dropToken(layout);dropToken(listener);if(!retain)dropToken(button);log(32,2);return retain?button:null;
+}
+
+function nativeArray(componentName,values){
+  log(81,1);const array=mirror.a(componentName,values.length);nativeResult(array,'array '+componentName);for(let index=0;index<values.length;index++)nativeCall(state.native.arrayClass,'set',[array,index,values[index]]);log(81,2);return array;
+}
+
+async function newOnMain(className,parameterTypes,args){
+  log(82,1);const type=nativeClass(className),parameterClasses=parameterTypes.map(nativeClass),signature=nativeArray('java.lang.Class',parameterClasses),argumentsArray=nativeArray('java.lang.Object',args);let constructor;
+  try{constructor=nativeCall(type,'getConstructor',[signature]);const created=await bridgeAsync(constructor,'newInstance',[argumentsArray]);log(82,2);return created}
+  finally{dropToken(constructor);dropToken(argumentsArray);dropToken(signature);parameterClasses.forEach(dropToken);dropToken(type)}
+}
+
+function ringLayerDocument(){
+  log(83,1);
+  return [
+    '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">',
+    '<style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent!important;touch-action:none;-webkit-user-select:none;user-select:none}body{font-family:system-ui,sans-serif}.ring{position:absolute;display:grid;place-items:center;border:4px solid #ff263d;border-radius:50%;color:#fff;font-weight:900;font-size:18px;text-shadow:0 1px 3px #000,0 0 2px #000;background:#0000;touch-action:none}.ring.selected{box-shadow:0 0 0 2px #23e9ff,0 0 15px #23e9ff}.ring b{pointer-events:none}.hint{position:fixed;left:8px;right:8px;top:116px;margin:auto;width:max-content;max-width:calc(100% - 16px);padding:6px 9px;border-radius:9px;background:#171b22dd;color:#ffd080;font:700 12px system-ui;pointer-events:none}body[data-mode="VISUAL"] .hint,body[data-mode="HIDDEN"] .hint{display:none}</style>',
+    '<div id="rings"></div><div class="hint">PLACE: drag a numbered ring · switches to VIEW after 30 s</div>',
+    '<script>(function(){',
+    "'use strict';var circles=new Map(),selectedId=null,drag=null,host=document.getElementById('rings');",
+    "function bounds(radius){return {maxX:Math.max(0,innerWidth-radius*2),maxY:Math.max(0,innerHeight-radius*2)}}",
+    "function clamp(circle){var limit=bounds(circle.radius);circle.left=Math.max(0,Math.min(limit.maxX,Number(circle.left)||0));circle.top=Math.max(0,Math.min(limit.maxY,Number(circle.top)||0))}",
+    "function paint(circle){clamp(circle);var node=document.getElementById('ring-'+circle.id);if(!node){node=document.createElement('div');node.id='ring-'+circle.id;node.className='ring';node.dataset.id=circle.id;node.innerHTML='<b>'+circle.id+'</b>';host.appendChild(node)}node.style.left=circle.left+'px';node.style.top=circle.top+'px';node.style.width=circle.radius*2+'px';node.style.height=circle.radius*2+'px';node.classList.toggle('selected',circle.id===selectedId)}",
+    "function select(id){selectedId=Number(id);circles.forEach(paint)}",
+    "function setState(value){var incoming=new Set;value.circles.forEach(function(raw){var circle={id:Number(raw.id),left:Number(raw.left),top:Number(raw.top),radius:Number(raw.radius)};incoming.add(circle.id);circles.set(circle.id,circle)});Array.from(circles.keys()).forEach(function(id){if(!incoming.has(id)){circles.delete(id);var node=document.getElementById('ring-'+id);if(node)node.remove()}});selectedId=value.selectedId==null?selectedId:Number(value.selectedId);if(!circles.has(selectedId))selectedId=circles.size?Array.from(circles.keys()).pop():null;document.body.dataset.mode=value.mode||document.body.dataset.mode||'HIDDEN';circles.forEach(paint);return true}",
+    "function exportState(){return JSON.stringify({dpr:devicePixelRatio||1,width:innerWidth,height:innerHeight,selectedId:selectedId,circles:Array.from(circles.values()).map(function(circle){return {id:circle.id,left:circle.left,top:circle.top,radius:circle.radius}})})}",
+    "function setMode(mode){document.body.dataset.mode=mode;return mode}",
+    "addEventListener('pointerdown',function(event){var node=event.target.closest&&event.target.closest('.ring');if(!node||document.body.dataset.mode!=='PLACE')return;event.preventDefault();var circle=circles.get(Number(node.dataset.id));select(circle.id);drag={id:circle.id,pointer:event.pointerId,dx:event.clientX-circle.left,dy:event.clientY-circle.top};node.setPointerCapture&&node.setPointerCapture(event.pointerId)},{passive:false});",
+    "addEventListener('pointermove',function(event){if(!drag||event.pointerId!==drag.pointer||document.body.dataset.mode!=='PLACE')return;event.preventDefault();var circle=circles.get(drag.id);circle.left=event.clientX-drag.dx;circle.top=event.clientY-drag.dy;paint(circle)},{passive:false});",
+    "function end(event){if(!drag||event.pointerId!==drag.pointer)return;event.preventDefault();var circle=circles.get(drag.id);if(circle)paint(circle);drag=null}",
+    "addEventListener('pointerup',end,{passive:false});addEventListener('pointercancel',end,{passive:false});addEventListener('resize',function(){circles.forEach(paint)});",
+    "window.overlayApi={setState:setState,exportState:exportState,setMode:setMode};document.body.dataset.mode='HIDDEN';",
+    '})();<\/script>'
+  ].join('');
+}
+
+function decodeEvaluation(token){
+  log(84,1);const raw=nativeValue(token);if(raw==null)return null;try{log(84,2);return JSON.parse(raw)}catch(error){log(84,3);return raw}
+}
+
+function handleOverlayEvaluation(id,method,args){
+  log(85,1);const pending=overlayEvaluations.get(id);if(!pending){args.forEach(dropToken);log(85,2);return}overlayEvaluations.delete(id);clearTimeout(pending.timeout);dropToken(pending.callback);
+  try{const value=args.length?decodeEvaluation(args[0]):null;for(let index=1;index<args.length;index++)dropToken(args[index]);if(method!=='onReceiveValue')throw new Error('Unexpected overlay evaluation callback '+method);pending.resolve(value);log(85,3)}
+  catch(error){args.forEach(dropToken);pending.reject(error);log(85,4)}
+}
+
+async function evaluateOverlay(code,timeoutMs=12000){
+  log(86,1);if(!state.ringLayer)throw new Error('Ring layer is not created');
+  if(state.ringLayer.frame){const target=state.ringLayer.frame.contentWindow;if(!target)throw new Error('Ring-layer frame is unavailable');return target.eval(String(code))}
+  const id=++state.evaluationId,callback=nativeProxy('android.webkit.ValueCallback',id);
+  return new Promise((resolve,reject)=>{const timeout=setTimeout(()=>{overlayEvaluations.delete(id);dropToken(callback);reject(new Error('Ring-layer JavaScript timed out'))},timeoutMs);overlayEvaluations.set(id,{resolve,reject,timeout,callback});
+    bridgeAsync(state.ringLayer.web,'evaluateJavascript',[String(code),callback]).catch(error=>{const pending=overlayEvaluations.get(id);if(pending){overlayEvaluations.delete(id);clearTimeout(timeout);dropToken(callback);reject(error)}});log(86,2)
+  });
+}
+
+async function waitRingLayer(){
+  log(87,1);for(let attempt=0;attempt<30;attempt++){try{if(await evaluateOverlay('!!window.overlayApi',3000)){log(87,2);return}}catch(error){log(87,3)}await delay(100)}throw new Error('Transparent ring layer did not finish loading');
+}
+
+async function createRingLayer(){
+  log(88,1);
+  let web,settings,params;
+  try{
+    web=await newOnMain('android.webkit.WebView',['android.content.Context'],[state.native.service]);
+    settings=nativeCall(web,'getSettings',[]);
+    nativeCall(settings,'setJavaScriptEnabled',[true]);
+    nativeCall(settings,'setDomStorageEnabled',[true]);
+    nativeCall(web,'setBackgroundColor',[0]);
+    params=createWindowParams(state.screenWidth,state.screenHeight,0,0,BASE_FLAGS|ANDROID.NOT_TOUCHABLE);
+    nativeCall(params,'setTitle',['Circle drag and visual layer']);
+    state.ringLayer={web,params,attached:'overlay',reusedMain:false};
+    await bridgeAsync(state.native.windowManager,'addView',[web,params]);
+    await bridgeAsync(web,'setVisibility',[ANDROID.INVISIBLE]);
+    await bridgeAsync(web,'loadDataWithBaseURL',[null,ringLayerDocument(),'text/html','utf-8',null]);
+    await waitRingLayer();
+    log(88,2);
+  }catch(error){
+    try{if(web)await bridgeAsync(state.native.windowManager,'removeView',[web])}catch(_error){}
+    try{if(web)await bridgeAsync(web,'destroy',[])}catch(_error){}
+    state.ringLayer=null;[web,settings,params].forEach(dropToken);throw error;
+  }finally{dropToken(settings)}
+}
+
+function setRingPagePresentation(overlaid){
+  const main=document.querySelector('main');if(main)main.style.display=overlaid?'none':'';if(state.ringLayer?.frame)state.ringLayer.frame.style.display=overlaid?'block':'none';document.documentElement.style.background=overlaid?'transparent':'';document.body.style.background=overlaid?'transparent':'';document.body.style.padding=overlaid?'0':'';
+}
+
+async function updateReusedRingLayer(mode){
+  const entry=state.ringLayer;if(!entry?.reusedMain)return;const overlaid=mode!=='HIDDEN';
+  if(overlaid){
+    setRingPagePresentation(true);await bridgeAsync(entry.web,'setBackgroundColor',[0]);const flags=BASE_FLAGS|(mode==='VISUAL'?ANDROID.NOT_TOUCHABLE:0);nativeSet(entry.params,'flags',flags);
+    if(entry.attached!=='overlay'){await bridgeAsync(entry.parent,'removeView',[entry.web]);await bridgeAsync(state.native.windowManager,'addView',[entry.web,entry.params]);entry.attached='overlay';entry.justAttached=true}else await bridgeAsync(state.native.windowManager,'updateViewLayout',[entry.web,entry.params]);
+    await bridgeAsync(entry.web,'setVisibility',[ANDROID.VISIBLE]);
+  }else{
+    if(entry.attached==='overlay'){await bridgeAsync(entry.web,'setVisibility',[ANDROID.INVISIBLE]);await bridgeAsync(state.native.windowManager,'removeView',[entry.web]);await bridgeAsync(entry.parent,'addView',[entry.web,entry.originalParams]);entry.attached='activity';entry.justAttached=false}
+    setRingPagePresentation(false);await bridgeAsync(entry.web,'setBackgroundColor',[signedColor(0xff080b10)]);await bridgeAsync(entry.web,'setVisibility',[ANDROID.VISIBLE]);
+  }
+}
+
+function overlayPayload(){
+  log(89,1);const scale=state.ringLayer?.dpr||state.density||1;return {mode:state.overlayMode,selectedId:state.selectedId,circles:state.circles.map(circle=>({id:circle.id,left:circle.x/scale,top:circle.y/scale,radius:circle.radius/scale}))};
+}
+
+async function pushOverlayState(){
+  log(90,1);if(!state.ringLayer)return;await evaluateOverlay('window.overlayApi.setState('+JSON.stringify(overlayPayload())+')');log(90,2);
+}
+
+async function syncOverlayState(){
+  log(91,1);if(!state.ringLayer)return;let exported=await evaluateOverlay('window.overlayApi.exportState()');if(typeof exported==='string')exported=JSON.parse(exported);if(!exported||!Array.isArray(exported.circles))throw new Error('Ring layer returned invalid state');
+  const dpr=Number(exported.dpr)||state.density||1;state.ringLayer.dpr=dpr;state.ringLayer.viewportWidth=Number(exported.width)||0;state.ringLayer.viewportHeight=Number(exported.height)||0;if(exported.selectedId!=null)state.selectedId=Number(exported.selectedId);
+  for(const remote of exported.circles){const circle=state.circles.find(item=>item.id===Number(remote.id));if(!circle)continue;const x=Number(remote.left)*dpr,y=Number(remote.top)*dpr,radius=Number(remote.radius)*dpr;if(Math.abs(circle.x-x)>.5||Math.abs(circle.y-y)>.5||Math.abs(circle.radius-radius)>.5){circle.x=x;circle.y=y;circle.radius=radius;circle.revision++;circle.calibrated=null;trace('RING DRAG SYNC',{id:circle.id,x,y,radius})}}
+  renderState();renderPositions();log(91,2);
+}
+
+async function createController(){
+  log(33,1);const root=nativeNew('android.widget.LinearLayout',[state.native.service]),top=nativeNew('android.widget.LinearLayout',[state.native.service]),bottom=nativeNew('android.widget.LinearLayout',[state.native.service]),statusView=nativeNew('android.widget.TextView',[state.native.service]);
+  nativeCall(root,'setOrientation',[ANDROID.VERTICAL]);nativeCall(top,'setOrientation',[ANDROID.HORIZONTAL]);nativeCall(bottom,'setOrientation',[ANDROID.HORIZONTAL]);nativeCall(root,'setPadding',[dp(5),dp(5),dp(5),dp(5)]);
+  const background=createDrawable(0,0xe6151a22,0,0,dp(12));nativeCall(root,'setBackground',[background]);dropToken(background);
+  addControllerButton(top,'−',0xff6b2630,CALLBACmirror.REMOVE);addControllerButton(top,'+',0xff176f4c,CALLBACmirror.ADD);addControllerButton(top,'DRAG',0xff8a5b16,CALLBACmirror.PLACE);addControllerButton(top,'VIEW',0xff245f9f,CALLBACmirror.VISUAL);addControllerButton(top,'HIDE',0xff394251,CALLBACmirror.HIDDEN);
+  const liveButton=addControllerButton(bottom,'LIVE OFF',0xff394251,CALLBACmirror.LIVE,true),feedbackButton=addControllerButton(bottom,'SELF OFF',0xff394251,CALLBACmirror.FEEDBACK,true);
+  addControllerButton(bottom,'READ',0xff285b78,CALLBACmirror.READ);addControllerButton(bottom,'CLICK',0xff9e2837,CALLBACmirror.CLICK);addControllerButton(bottom,'R+C',0xff62459a,CALLBACmirror.BOTH);
+  nativeCall(statusView,'setTextColor',[signedColor(0xffffffff)]);nativeCall(statusView,'setTextSize',[10]);nativeCall(statusView,'setPadding',[dp(5),dp(2),dp(5),0]);nativeCall(statusView,'setText',['MODE PLACE · 0 circles']);
+  const rowLayout=nativeNew('android.widget.LinearLayout$LayoutParams',[ANDROID.MATCH_PARENT,dp(40)]),statusLayout=nativeNew('android.widget.LinearLayout$LayoutParams',[ANDROID.MATCH_PARENT,ANDROID.WRAP_CONTENT]);nativeCall(root,'addView',[top,rowLayout]);nativeCall(root,'addView',[bottom,rowLayout]);nativeCall(root,'addView',[statusView,statusLayout]);dropToken(rowLayout);dropToken(statusLayout);dropToken(top);dropToken(bottom);
+  const params=createWindowParams(state.screenWidth-dp(12),ANDROID.WRAP_CONTENT,dp(6),dp(48),BASE_FLAGS);nativeCall(params,'setTitle',['Circle overlay controller']);await bridgeAsync(state.native.windowManager,'addView',[root,params]);state.controller={view:root,params,status:statusView,liveButton,feedbackButton,lastText:'',lastLive:'',lastFeedback:''};log(33,2);
+}
+
+async function startOverlay(){
+  log(34,1);if(state.busy){log(34,2);return}state.busy=true;renderState();try{await prepareNative();if(!state.overlayReady){await createRingLayer();await createController();state.overlayReady=true;trace('OVERLAY WINDOWS CREATED')}await pushOverlayState();await setOverlayMode('PLACE');setStatus('PLACE mode: press + to spawn a ring, then drag it directly. The transparent placement layer becomes click-through after 30 seconds.')}catch(error){if(!state.overlayReady&&(state.ringLayer||state.controller))await destroyOverlays();throw error}finally{state.busy=false;renderState()}log(34,3);
+}
+
+function spawnPosition(radius,id){
+  log(35,1);const diameter=radius*2,gap=dp(18),columns=Math.max(1,Math.floor((state.screenWidth-dp(24))/(diameter+gap))),index=Math.max(0,id-1),x=dp(18)+(index%columns)*(diameter+gap),y=dp(190)+Math.floor(index/columns)*(diameter+gap);log(35,2);return {x:Math.max(0,Math.min(x,state.screenWidth-diameter)),y:Math.max(0,Math.min(y,state.screenHeight-diameter))};
+}
+
+async function spawnCircle(){
+  log(36,1);if(state.busy){log(36,2);return}state.busy=true;renderState();try{await prepareNative();if(!state.overlayReady){await createRingLayer();await createController();state.overlayReady=true}else await syncOverlayState();state.overlayMode='PLACE';await refreshMetrics();const radius=dp(Math.max(12,Math.min(100,Number(ui.radius.value)||34))),id=state.nextId++,position=spawnPosition(radius,id),circle={id,x:position.x,y:position.y,radius,calibrated:null,revision:0,result:null};state.circles.push(circle);state.selectedId=id;await pushOverlayState();await applyNativeMode(state.overlayMode);armPlaceSafety();trace('CIRCLE SPAWNED',{id,x:circle.x,y:circle.y,radius});setStatus('Circle '+id+' spawned in PLACE mode. Drag it directly to the target.');
+  }catch(error){if(!state.overlayReady&&(state.ringLayer||state.controller))await destroyOverlays();throw error}finally{state.busy=false;renderState()}log(36,3);
+}
+
+async function removeSelectedCircle(){
+  log(37,1);if(state.ringLayer)await syncOverlayState();const circle=selectedCircle()||state.circles[state.circles.length-1];if(!circle){log(37,2);setStatus('No circle to remove.',true);return}await removeCircle(circle);setStatus(`Circle ${circle.id} removed.`);log(37,3);
+}
+
+async function removeCircle(circle){
+  log(38,1);state.circles=state.circles.filter(item=>item!==circle);if(state.selectedId===circle.id){const last=state.circles[state.circles.length-1];state.selectedId=last?last.id:null}if(state.ringLayer)await pushOverlayState();renderState();renderPositions();log(38,3);
+}
+
+async function destroyOverlays(){
+  log(39,1);clearTimeout(state.placeTimer);state.busy=true;renderState();try{
+    if(state.controller){try{await bridgeAsync(state.native.windowManager,'removeView',[state.controller.view])}catch(error){log(39,2);trace('CONTROLLER REMOVE FAILED',error.message)}[state.controller.liveButton,state.controller.feedbackButton,state.controller.view,state.controller.params,state.controller.status].forEach(dropToken)}
+    if(state.ringLayer){if(state.ringLayer.reusedMain){try{await updateReusedRingLayer('HIDDEN')}catch(error){log(39,3);trace('RING LAYER RESTORE FAILED',error.message)}state.ringLayer.frame?.remove();[state.ringLayer.web,state.ringLayer.parent,state.ringLayer.originalParams,state.ringLayer.params].forEach(dropToken)}else{try{await bridgeAsync(state.native.windowManager,'removeView',[state.ringLayer.web])}catch(error){log(39,3);trace('RING LAYER REMOVE FAILED',error.message)}try{await bridgeAsync(state.ringLayer.web,'stopLoading',[]);await bridgeAsync(state.ringLayer.web,'loadUrl',['about:blank']);await bridgeAsync(state.ringLayer.web,'destroy',[])}catch(error){log(39,4);trace('RING LAYER DESTROY FAILED',error.message)}dropToken(state.ringLayer.web);dropToken(state.ringLayer.params)}}
+    for(const pending of overlayEvaluations.values()){clearTimeout(pending.timeout);dropToken(pending.callback);pending.reject(new Error('Ring layer destroyed'))}overlayEvaluations.clear();state.controller=null;state.ringLayer=null;state.overlayReady=false;state.overlayMode='HIDDEN';state.circles=[];state.selectedId=null;setStatus('All overlay windows were destroyed. Live view remains '+(state.live.enabled?'ON.':'OFF.'));
+  }finally{state.busy=false;renderState();renderPositions()}log(39,5);
+}
+
+function destroyOverlaysNow(){
+  log(39,6);if(!state.overlayReady||!state.native){log(39,7);return}const manager=tokenHandle(state.native.windowManager),ring=state.ringLayer,views=[ring?.attached==='overlay'?ring.web:null,state.controller?.view].filter(Boolean);for(const view of views)try{mirror.u(manager,'removeView',JSON.stringify([view]),0);log(39,8)}catch(error){log(39,9)}if(ring?.reusedMain&&ring.attached==='overlay')try{mirror.u(tokenHandle(ring.parent),'addView',JSON.stringify([ring.web,ring.originalParams]),0)}catch(error){log(39,9)}
+  state.overlayReady=false;state.overlayMode='HIDDEN';state.controller=null;state.ringLayer=null;clearTimeout(state.placeTimer);setStatus('Emergency overlay removal requested. Main page was not moved in this fixed build.');renderState();
+}
+
+function selectedCircle(){log(40,1);return state.circles.find(circle=>circle.id===state.selectedId)||null}
+
+async function updateWindowMode(entry,mode,isController=false){
+  log(44,1);if(!entry)return;if(entry.reusedMain){await updateReusedRingLayer(mode);log(44,2);return}const view=entry.view||entry.web,flags=BASE_FLAGS|((mode==='HIDDEN'||(!isController&&mode==='VISUAL'))?ANDROID.NOT_TOUCHABLE:0),visibility=mode==='HIDDEN'?ANDROID.INVISIBLE:ANDROID.VISIBLE;nativeSet(entry.params,'flags',flags);await bridgeAsync(state.native.windowManager,'updateViewLayout',[view,entry.params]);await bridgeAsync(view,'setVisibility',[visibility]);log(44,2);
+}
+
+async function applyNativeMode(mode){
+  log(45,1);if(!state.overlayReady){log(45,2);return}await updateWindowMode(state.ringLayer,mode,false);if(state.ringLayer?.justAttached&&state.controller){await bridgeAsync(state.native.windowManager,'removeView',[state.controller.view]);await bridgeAsync(state.native.windowManager,'addView',[state.controller.view,state.controller.params]);state.ringLayer.justAttached=false}await updateWindowMode(state.controller,mode,true);log(45,3);
+}
+
+async function setOverlayMode(mode){
+  log(46,1);if(!['PLACE','VISUAL','HIDDEN'].includes(mode))throw new Error(`Unknown overlay mode ${mode}`);if(!state.overlayReady&&mode!=='HIDDEN'){await startOverlay();if(mode!=='PLACE')await setOverlayMode(mode);return}if(state.ringLayer&&state.overlayMode==='PLACE')await syncOverlayState();state.overlayMode=mode;if(state.ringLayer)await evaluateOverlay('window.overlayApi.setMode('+JSON.stringify(mode)+')');await applyNativeMode(mode);armPlaceSafety();renderState();renderPositions();
+  const messages={PLACE:'PLACE: rings can be selected and dragged; no underlying click occurs from touching them.',VISUAL:'VISUAL: rings are visible but fully click-through. The compact controller remains touchable.',HIDDEN:'HIDDEN: controller and rings are invisible and non-touchable. Reopen this page to show them.'};setStatus(messages[mode]);trace('MODE',mode);log(46,2);
+}
+
+function armPlaceSafety(){
+  log(47,1);clearTimeout(state.placeTimer);if(state.overlayMode==='PLACE'){state.placeTimer=setTimeout(()=>{log(47,2);setOverlayMode('VISUAL').catch(fail)},30000)}
+}
+
+async function setViewVisibility(view,visibility){log(48,1);if(view)await bridgeAsync(view,'setVisibility',[visibility])}
+
+async function temporaryPresentation(kind){
+  log(49,1);if(!state.overlayReady||kind==='CURRENT')return;if(kind==='CLEAN'){if(state.controller)await setViewVisibility(state.controller.view,ANDROID.INVISIBLE);if(state.ringLayer)await setViewVisibility(state.ringLayer.web,ANDROID.INVISIBLE);log(49,2);return}
+  if(kind==='LOCATOR'){if(state.controller)await setViewVisibility(state.controller.view,ANDROID.INVISIBLE);if(state.ringLayer){await evaluateOverlay('window.overlayApi.setMode("VISUAL")');nativeSet(state.ringLayer.params,'flags',BASE_FLAGS|ANDROID.NOT_TOUCHABLE);await bridgeAsync(state.native.windowManager,'updateViewLayout',[state.ringLayer.web,state.ringLayer.params]);await setViewVisibility(state.ringLayer.web,ANDROID.VISIBLE)}log(49,3)}
+}
+
+async function restorePresentation(){
+  log(50,1);if(state.overlayReady){if(state.ringLayer)await evaluateOverlay('window.overlayApi.setMode('+JSON.stringify(state.overlayMode)+')');await applyNativeMode(state.overlayMode)}log(50,2);
+}
+
+async function withCapture(owner,operation){
+  log(92,1);const deadline=Date.now()+20000;while(state.captureOwner){if(Date.now()>deadline)throw new Error('Capture lock timed out behind '+state.captureOwner);await delay(40)}state.captureOwner=owner;renderState();try{log(92,2);return await operation()}finally{state.captureOwner='';renderState();log(92,3)}
+}
+
+function hidePageCanvases(hidden){
+  log(93,1);const value=hidden?'hidden':'';ui.livePreview.style.visibility=value;ui.preview.style.visibility=value;
+}
+
+async function screenshotGap(){
+  log(51,1);const remaining=1100-(Date.now()-state.lastScreenshotAt);if(remaining>0){log(51,2);await delay(remaining)}
+}
+
+function requestScreenshotResult(){
+  log(52,1);if(state.shot)throw new Error('A screenshot is already pending');return new Promise((resolve,reject)=>{const timeout=setTimeout(()=>{log(52,3);if(state.shot){state.shot=null;reject(new Error('Screenshot callback timed out'))}},15000);state.shot={resolve,reject,timeout};try{nativeCall(state.native.service,'takeScreenshot',[0,state.native.executor,state.native.screenshotCallback]);log(52,2)}catch(error){clearTimeout(timeout);state.shot=null;reject(error)}});
+}
+
+function handleScreenshotCallback(method,args){
+  log(53,1);const pending=state.shot;state.lastScreenshotAt=Date.now();if(!pending){args.forEach(dropToken);log(53,2);return}clearTimeout(pending.timeout);state.shot=null;
+  if(method==='onSuccess'){log(53,3);const token=args[0];for(let index=1;index<args.length;index++)dropToken(args[index]);pending.resolve(token)}else{log(53,4);const code=Number(nativeValue(args[0])),reason={1:'internal error',2:'no accessibility access',3:'requests too close together',4:'invalid display',5:'invalid window',6:'secure window'}[code]||'unknown';args.forEach(dropToken);pending.reject(new Error(`Screenshot failed: ${reason} (Android ${code})`))}
+}
+
+async function captureBitmap(kind,beforeRestore=null){
+  log(54,1);const presentationChanged=kind!=='CURRENT';await screenshotGap();await temporaryPresentation(kind);hidePageCanvases(true);await delay(presentationChanged?110:55);let resultToken;try{resultToken=await requestScreenshotResult();if(beforeRestore){log(54,2);await beforeRestore()}}catch(error){hidePageCanvases(false);if(presentationChanged)await restorePresentation();dropToken(resultToken);throw error}hidePageCanvases(false);if(presentationChanged)await restorePresentation();try{const bitmap=consumeScreenshotResult(resultToken);log(54,3);return bitmap}catch(error){dropToken(resultToken);throw error}
+}
+
+function consumeScreenshotResult(resultToken){
+  log(55,1);let buffer,colorSpace,hardwareBitmap,bitmap;try{buffer=nativeCall(resultToken,'getHardwareBuffer',[]);colorSpace=nativeCall(resultToken,'getColorSpace',[]);hardwareBitmap=nativeCall(state.native.bitmapClass,'wrapHardwareBuffer',[buffer,colorSpace==='V'?null:colorSpace]);if(hardwareBitmap==='V')throw new Error('Bitmap.wrapHardwareBuffer returned null');bitmap=nativeCall(hardwareBitmap,'copy',[state.native.argb,false]);if(bitmap==='V')throw new Error('Bitmap.copy returned null');log(55,2);return bitmap}finally{if(hardwareBitmap)safeNativeCall(hardwareBitmap,'recycle',[]);if(buffer)safeNativeCall(buffer,'close',[]);dropToken(hardwareBitmap);dropToken(colorSpace);dropToken(buffer);dropToken(resultToken)}
+}
+
+function safeNativeCall(target,method,args=[]){
+  log(56,1);try{if(/^P\d+$/.test(String(target)))return nativeCall(target,method,args)}catch(error){log(56,2);trace('CLEANUP CALL FAILED',`${method}: ${error.message}`)}return null;
+}
+
+function decodeImage(base64,mime='image/png'){
+  log(57,1);return new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>{log(57,2);try{const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;const context=canvas.getContext('2d',{willReadFrequently:true,colorSpace:'srgb'});context.drawImage(image,0,0);resolve({imageData:context.getImageData(0,0,canvas.width,canvas.height),canvas})}catch(error){log(57,3);reject(error)}};image.onerror=()=>{log(57,4);reject(new Error('Native '+mime+' image could not be decoded'))};image.src='data:'+mime+';base64,'+base64});
+}
+
+function decodePng(base64){log(94,1);return decodeImage(base64,'image/png')}
+
+async function bitmapRegion(bitmap,left,top,width,height){
+  log(58,1);const bitmapWidth=Number(nativeValue(nativeCall(bitmap,'getWidth',[]))),bitmapHeight=Number(nativeValue(nativeCall(bitmap,'getHeight',[]))),x=Math.max(0,Math.min(bitmapWidth-1,Math.floor(left))),y=Math.max(0,Math.min(bitmapHeight-1,Math.floor(top))),w=Math.max(1,Math.min(bitmapWidth-x,Math.ceil(width))),h=Math.max(1,Math.min(bitmapHeight-y,Math.ceil(height)));let crop,output,bytes;
+  try{crop=nativeCall(state.native.bitmapClass,'createBitmap',[bitmap,x,y,w,h]);output=nativeNew('java.io.ByteArrayOutputStream',[]);const compressed=nativeCall(crop,'compress',[state.native.png,100,output]);if(compressed!=='Vtrue')throw new Error('Crop PNG compression failed');bytes=nativeCall(output,'toByteArray',[]);const encoded=nativeCall(state.native.base64Class,'encodeToString',[bytes,2]),decoded=await decodePng(nativeValue(encoded));log(58,2);return {...decoded,x,y,width:w,height:h}}
+  finally{safeNativeCall(crop,'recycle',[]);safeNativeCall(output,'close',[]);dropToken(bytes);dropToken(output);dropToken(crop)}
+}
+
+async function bitmapThumbnail(bitmap,maxWidth){
+  log(95,1);const fullWidth=Number(nativeValue(nativeCall(bitmap,'getWidth',[]))),fullHeight=Number(nativeValue(nativeCall(bitmap,'getHeight',[]))),scale=Math.min(1,Math.max(0.1,Number(maxWidth)||500)/fullWidth),width=Math.max(1,Math.round(fullWidth*scale)),height=Math.max(1,Math.round(fullHeight*scale));let scaled,output,bytes;
+  try{const source=scale<.999?(scaled=nativeCall(state.native.bitmapClass,'createScaledBitmap',[bitmap,width,height,true])):bitmap;output=nativeNew('java.io.ByteArrayOutputStream',[]);const compressed=nativeCall(source,'compress',[state.native.jpeg,72,output]);if(compressed!=='Vtrue')throw new Error('Live JPEG compression failed');bytes=nativeCall(output,'toByteArray',[]);const encoded=nativeCall(state.native.base64Class,'encodeToString',[bytes,2]),decoded=await decodeImage(nativeValue(encoded),'image/jpeg');log(95,2);return {...decoded,fullWidth,fullHeight,width,height,scaleX:width/fullWidth,scaleY:height/fullHeight}}
+  finally{safeNativeCall(scaled,'recycle',[]);safeNativeCall(output,'close',[]);dropToken(bytes);dropToken(output);dropToken(scaled)}
+}
+
+function showPreview(region,marks=[]){
+  log(59,1);if(!previewContext)return;ui.preview.width=region.width;ui.preview.height=region.height;previewContext.putImageData(region.imageData,0,0);previewContext.lineWidth=Math.max(2,Math.round(state.density*2));previewContext.font=`${Math.max(12,Math.round(state.density*11))}px sans-serif`;for(const mark of marks){previewContext.strokeStyle=mark.color||'#38e7ff';previewContext.fillStyle=mark.color||'#38e7ff';previewContext.beginPath();previewContext.arc(mark.x-region.x,mark.y-region.y,mark.radius,0,Math.PI*2);previewContext.stroke();previewContext.fillText(mark.label||'',mark.x-region.x+5,mark.y-region.y-5)}log(59,2);
+}
+
+function locateRing(region,circle,expectedX,expectedY){
+  log(60,1);const {width,height,data}=region.imageData,mask=new Uint8Array(width*height),queue=new Int32Array(width*height),redPixel=index=>data[index]>=190&&data[index+1]<=135&&data[index+2]<=150&&data[index]-data[index+1]>=70&&data[index]-data[index+2]>=55&&data[index+3]>=120;let redCount=0;
+  for(let pixel=0,index=0;pixel<mask.length;pixel++,index+=4)if(redPixel(index)){mask[pixel]=1;redCount++}const expectedLocalX=expectedX-region.x,expectedLocalY=expectedY-region.y,diameter=circle.radius*2,candidates=[];log(60,2);
+  for(let seed=0;seed<mask.length;seed++){if(mask[seed]!==1)continue;let head=0,tail=0,count=0,minX=width,maxX=-1,minY=height,maxY=-1;queue[tail++]=seed;mask[seed]=2;
+    while(head<tail){const pixel=queue[head++],x=pixel%width,y=(pixel/width)|0;count++;if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;const neighbours=[pixel-1,pixel+1,pixel-width,pixel+width];for(let n=0;n<4;n++){const next=neighbours[n];if(next<0||next>=mask.length||mask[next]!==1)continue;if((n===0&&x===0)||(n===1&&x===width-1))continue;mask[next]=2;queue[tail++]=next}}
+    const boxWidth=maxX-minX+1,boxHeight=maxY-minY+1;if(count<Math.max(24,circle.radius*2)||boxWidth<circle.radius||boxHeight<circle.radius)continue;const centerX=(minX+maxX)/2,centerY=(minY+maxY)/2,sizeError=(Math.abs(boxWidth-diameter)+Math.abs(boxHeight-diameter))/diameter,roundError=Math.abs(boxWidth-boxHeight)/diameter,distance=Math.hypot(centerX-expectedLocalX,centerY-expectedLocalY)/Math.max(circle.radius,1),density=count/(boxWidth*boxHeight),densityError=Math.abs(density-0.16)/0.16,score=1-(sizeError*0.34+roundError*0.18+Math.min(distance,4)*0.18+Math.min(densityError,3)*0.12);candidates.push({centerX,centerY,boxWidth,boxHeight,count,score})
+  }
+  candidates.sort((a,b)=>b.score-a.score);const best=candidates[0];if(!best||best.score<0.30){log(60,3);return null}const located={x:region.x+best.centerX,y:region.y+best.centerY,radius:circle.radius,visualRadius:(best.boxWidth+best.boxHeight)/4,confidence:Math.max(0,Math.min(1,best.score)),redPixels:best.count,redCount};log(60,4);return located;
+}
+
+function cropImageData(source,left,top,width,height){
+  log(96,1);left=Math.max(0,Math.min(source.width-1,Math.floor(left)));top=Math.max(0,Math.min(source.height-1,Math.floor(top)));width=Math.max(1,Math.min(source.width-left,Math.ceil(width)));height=Math.max(1,Math.min(source.height-top,Math.ceil(height)));const data=new Uint8ClampedArray(width*height*4);for(let row=0;row<height;row++){const from=((top+row)*source.width+left)*4;data.set(source.data.subarray(from,from+width*4),row*width*4)}log(96,2);return {x:left,y:top,width,height,imageData:new ImageData(data,width,height)};
+}
+
+function locateLiveCircles(thumbnail){
+  log(97,1);const detections=[],scaleRadius=(thumbnail.scaleX+thumbnail.scaleY)/2;for(const circle of state.circles){const expected=centerFor(circle,false),expectedX=expected.x*thumbnail.scaleX,expectedY=expected.y*thumbnail.scaleY,scaledRadius=Math.max(4,circle.radius*scaleRadius),half=Math.ceil(scaledRadius*2.45+10),region=cropImageData(thumbnail.imageData,expectedX-half,expectedY-half,half*2,half*2),located=locateRing(region,{radius:scaledRadius},expectedX,expectedY);
+    if(located){const actual={x:located.x/thumbnail.scaleX,y:located.y/thumbnail.scaleY,radius:circle.radius,visualRadius:located.visualRadius/scaleRadius,confidence:located.confidence,redPixels:located.redPixels,revision:circle.revision,at:new Date().toISOString()};circle.calibrated=actual;detections.push({circle,expected,actual,preview:{x:located.x,y:located.y,radius:located.visualRadius}});trace('LIVE RING FOUND',{id:circle.id,x:actual.x,y:actual.y,confidence:actual.confidence})}
+    else detections.push({circle,expected,actual:null,preview:{x:expectedX,y:expectedY,radius:scaledRadius}});
+  }state.live.found=detections.filter(item=>item.actual).length;if(state.live.found){state.live.lastFeedbackAt=new Date().toISOString();ui.feedbackTime.textContent=state.live.lastFeedbackAt.slice(11,23)}renderPositions();log(97,2);return detections;
+}
+
+function drawLiveFrame(thumbnail,detections=[]){
+  log(98,1);if(!liveContext)return;ui.livePreview.width=thumbnail.width;ui.livePreview.height=thumbnail.height;liveContext.putImageData(thumbnail.imageData,0,0);let red=0,green=0,blue=0;const pixels=thumbnail.imageData.data;for(let index=0;index<pixels.length;index+=4){red+=pixels[index];green+=pixels[index+1];blue+=pixels[index+2]}
+  liveContext.lineWidth=2;liveContext.font='bold 12px sans-serif';for(const detection of detections){const mark=detection.preview;if(detection.actual){liveContext.strokeStyle='#28e9ff';liveContext.fillStyle='#28e9ff';liveContext.beginPath();liveContext.arc(mark.x,mark.y,mark.radius,0,Math.PI*2);liveContext.stroke();const expectedX=detection.expected.x*thumbnail.scaleX,expectedY=detection.expected.y*thumbnail.scaleY;liveContext.beginPath();liveContext.moveTo(expectedX,expectedY);liveContext.lineTo(mark.x,mark.y);liveContext.stroke();liveContext.fillText('#'+detection.circle.id+' '+Math.round(detection.actual.confidence*100)+'%',mark.x+5,mark.y-5)}else{liveContext.strokeStyle='#ffd35a';liveContext.setLineDash([5,4]);liveContext.beginPath();liveContext.arc(mark.x,mark.y,mark.radius,0,Math.PI*2);liveContext.stroke();liveContext.setLineDash([]);liveContext.fillStyle='#ffd35a';liveContext.fillText('#'+detection.circle.id+' not found',mark.x+5,mark.y-5)}}
+  const now=performance.now(),delta=state.live.lastFrameAt?now-state.live.lastFrameAt:0;state.live.lastFrameAt=now;state.live.frames++;ui.liveDimensions.textContent=thumbnail.fullWidth+' × '+thumbnail.fullHeight+' / '+thumbnail.width+' × '+thumbnail.height;ui.liveRate.textContent=(delta?(1000/delta).toFixed(2):'—')+' fps';ui.liveRgb.textContent=[red,green,blue].map(formatInteger).join(' / ');renderState();log(98,2);
+}
+
+function liveIntervalValue(){log(99,1);return Math.max(1100,Math.min(5000,Number(ui.liveInterval.value)||1200))}
+function livePreviewWidth(){log(100,1);return Math.max(240,Math.min(900,Number(ui.previewWidth.value)||500))}
+
+function scheduleLive(delayMs=0){
+  log(101,1);clearTimeout(state.live.timer);state.live.timer=0;if(state.live.enabled)state.live.timer=setTimeout(()=>captureLiveFrame().catch(fail),Math.max(0,delayMs));
+}
+
+async function captureLiveFrame(){
+  log(102,1);if(!state.live.enabled)return;if(state.live.busy||state.busy||state.captureOwner){scheduleLive(120);log(102,2);return}state.live.busy=true;const started=performance.now();try{await prepareNative();if(state.ringLayer)await syncOverlayState();await withCapture('LIVE',async()=>{let bitmap;try{bitmap=await captureBitmap('CURRENT');const thumbnail=await bitmapThumbnail(bitmap,livePreviewWidth()),detections=state.live.feedback&&state.overlayMode!=='HIDDEN'?locateLiveCircles(thumbnail):[];if(state.live.feedback&&state.overlayMode==='HIDDEN')state.live.found=0;drawLiveFrame(thumbnail,detections)}finally{safeNativeCall(bitmap,'recycle',[]);dropToken(bitmap)}});trace('LIVE FRAME',{frame:state.live.frames,found:state.live.found,elapsed:performance.now()-started})}
+  catch(error){state.lastError=error.message||String(error);trace('LIVE FRAME FAILED',error.stack||String(error));setStatus('Live view failed: '+state.lastError,true)}
+  finally{state.live.busy=false;renderState();if(state.live.enabled)scheduleLive(Math.max(0,liveIntervalValue()-(performance.now()-started)));log(102,3)}
+}
+
+async function setLiveView(enabled){
+  log(103,1);enabled=!!enabled;clearTimeout(state.live.timer);state.live.timer=0;if(!enabled){state.live.enabled=false;state.live.feedback=false;setStatus('LIVE VIEW OFF. No automatic screenshots are scheduled.');renderState();updateControllerText();log(103,2);return}
+  await prepareNative();state.live.enabled=true;state.live.lastStartedAt=Date.now();setStatus('LIVE VIEW ON. Capturing downscaled screen frames; exact circle reads remain full resolution.');renderState();updateControllerText();scheduleLive(0);log(103,3);
+}
+
+async function setSelfFeedback(enabled){
+  log(104,1);enabled=!!enabled;if(enabled&&!state.live.enabled)await setLiveView(true);state.live.feedback=enabled;if(!enabled)state.live.found=0;setStatus(enabled?(state.overlayMode==='HIDDEN'?'SELF-FEEDBACK ON but paused while rings are HIDDEN.':'SELF-FEEDBACK ON: each live frame visually locates the red rings.'):'SELF-FEEDBACK OFF. Live view state is unchanged.');renderState();updateControllerText();if(enabled)scheduleLive(0);log(104,2);
+}
+
+async function calibrateTargets(targets){
+  log(61,1);if(!targets.length)throw new Error('No circles to calibrate');await prepareNative();if(state.ringLayer)await syncOverlayState();return withCapture('CALIBRATE',async()=>{const bitmap=await captureBitmap('LOCATOR');let success=0;try{
+    for(const circle of targets){const expected=centerFor(circle,false),half=Math.ceil(circle.radius*2.25+dp(18)),region=await bitmapRegion(bitmap,expected.x-half,expected.y-half,half*2,half*2),located=locateRing(region,circle,expected.x,expected.y);if(located){circle.calibrated={...located,revision:circle.revision,at:new Date().toISOString()};success++;trace('CIRCLE LOCATED',{id:circle.id,...located})}else{circle.calibrated=null;trace('CIRCLE NOT LOCATED',{id:circle.id,expected})}showPreview(region,located?[{x:located.x,y:located.y,radius:located.radius,label:'#'+circle.id+' '+(located.confidence*100).toFixed(0)+'%'}]:[{x:expected.x,y:expected.y,radius:circle.radius,label:'#'+circle.id+' expected',color:'#ffd35a'}])}
+  }finally{safeNativeCall(bitmap,'recycle',[]);dropToken(bitmap)}renderState();renderPositions();setStatus('Visual calibration found '+success+' of '+targets.length+' ring'+(targets.length===1?'':'s')+'.');log(61,2);return success});
+}
+
+async function calibrateAll(){
+  log(62,1);if(state.busy){log(62,2);return}if(!state.circles.length){setStatus('Spawn at least one circle first.',true);return}state.busy=true;renderState();try{await calibrateTargets([...state.circles])}finally{state.busy=false;renderState()}log(62,3);
+}
+
+function centerFor(circle,allowCalibration=true){
+  log(63,1);const calibrated=allowCalibration&&circle.calibrated&&circle.calibrated.revision===circle.revision?circle.calibrated:null;return calibrated?{x:calibrated.x,y:calibrated.y,radius:calibrated.radius,source:'visual'}:{x:circle.x+circle.radius,y:circle.y+circle.radius,radius:circle.radius,source:'layout estimate'};
+}
+
+function accumulator(){log(64,1);return {pixels:0,red:0,green:0,blue:0,min:[255,255,255],max:[0,0,0],hist:[new Uint32Array(16),new Uint32Array(16),new Uint32Array(16)]}}
+
+function addPixel(target,red,green,blue){
+  log(65,1);target.pixels++;target.red+=red;target.green+=green;target.blue+=blue;const values=[red,green,blue];for(let channel=0;channel<3;channel++){if(values[channel]<target.min[channel])target.min[channel]=values[channel];if(values[channel]>target.max[channel])target.max[channel]=values[channel];target.hist[channel][values[channel]>>4]++}
+}
+
+function finishAccumulator(target){
+  log(66,1);const total=target.red+target.green+target.blue,pixels=target.pixels||1;return {pixels:target.pixels,sum:[target.red,target.green,target.blue],average:[target.red/pixels,target.green/pixels,target.blue/pixels],share:total?[target.red/total,target.green/total,target.blue/total]:[0,0,0],min:target.min,max:target.max,hist:target.hist.map(channel=>Array.from(channel))};
+}
+
+function analyzeCircle(imageData,centerX,centerY,radius){
+  log(67,1);const core=accumulator(),outer=accumulator(),annulus=accumulator(),r2=radius*radius,r4=4*r2,{width,height,data}=imageData;for(let y=0;y<height;y++){const dy=y+0.5-centerY;for(let x=0;x<width;x++){const dx=x+0.5-centerX,distance=dx*dx+dy*dy;if(distance>r4)continue;const index=(y*width+x)*4,red=data[index],green=data[index+1],blue=data[index+2];addPixel(outer,red,green,blue);if(distance<=r2)addPixel(core,red,green,blue);else addPixel(annulus,red,green,blue)}}log(67,2);return {core:finishAccumulator(core),outer:finishAccumulator(outer),annulus:finishAccumulator(annulus)};
+}
+
+async function readCircle(circle,clickAfter=false){
+  log(68,1);return withCapture(clickAfter?'READ_CLICK':'READ',async()=>{const center=centerFor(circle),bitmap=await captureBitmap('CLEAN',clickAfter?()=>bridgeAsync(state.native.service,'tap',[center.x,center.y]):null);try{const margin=dp(3),diameter=center.radius*4,region=await bitmapRegion(bitmap,center.x-center.radius*2-margin,center.y-center.radius*2-margin,diameter+margin*2,diameter+margin*2),analysis=analyzeCircle(region.imageData,center.x-region.x,center.y-region.y,center.radius),result={at:new Date().toISOString(),center:{x:center.x,y:center.y,radius:center.radius,source:center.source},...analysis,clicked:clickAfter};circle.result=result;state.lastResult={circleId:circle.id,...result};showPreview(region,[{x:center.x,y:center.y,radius:center.radius,label:'#'+circle.id+' r'},{x:center.x,y:center.y,radius:center.radius*2,label:'2r',color:'#ffd35a'}]);renderResults();trace('RGB READ',{circle:circle.id,center:result.center,core:result.core,outer:result.outer,clicked:clickAfter});log(68,2);return result}finally{safeNativeCall(bitmap,'recycle',[]);dropToken(bitmap)}});
+}
+
+async function clickCircle(circle){
+  log(69,1);return withCapture('CLICK',async()=>{const center=centerFor(circle);await temporaryPresentation('CLEAN');await delay(90);try{await bridgeAsync(state.native.service,'tap',[center.x,center.y]);trace('TAP',{circle:circle.id,x:center.x,y:center.y,source:center.source});await delay(90)}finally{await restorePresentation()}log(69,2);return center});
+}
+
+async function runAction(kind){
+  log(70,1);if(state.busy){log(70,2);return}if(state.ringLayer)await syncOverlayState();const circle=selectedCircle();if(!circle){setStatus('Select or spawn a circle first.',true);return}state.busy=true;ui.action.textContent=kind;renderState();try{await prepareNative();const hasFreshCalibration=circle.calibrated?.revision===circle.revision;if(state.overlayMode!=='HIDDEN'&&!hasFreshCalibration){setStatus(`Visually locating circle ${circle.id} before ${kind}…`);await calibrateTargets([circle])}
+    if(kind==='READ'){setStatus(`Reading RGB inside circle ${circle.id} at r and 2r…`);await readCircle(circle,false);setStatus(`Circle ${circle.id} RGB read complete.`)}
+    else if(kind==='CLICK'){setStatus(`Explicitly clicking circle ${circle.id}…`);const center=await clickCircle(circle);setStatus(`Clicked circle ${circle.id} at ${Math.round(center.x)}, ${Math.round(center.y)} using ${center.source}.`)}
+    else{setStatus(`Reading circle ${circle.id}, then clicking the same captured location…`);await readCircle(circle,true);setStatus(`Circle ${circle.id} was read and then clicked.`)}
+  }finally{state.busy=false;ui.action.textContent='idle';renderState()}log(70,3);
+}
+
+function formatInteger(value){log(71,1);return Math.round(Number(value)||0).toLocaleString('en-US').replace(/,/g,' ')}
+function histogramText(stats){log(73,1);const labels=Array.from({length:16},(_,index)=>`${index*16}-${index*16+15}`);return ['R','G','B'].map((channel,index)=>`${channel}: ${labels.map((label,bin)=>`${label}:${stats.hist[index][bin]}`).join(' | ')}`).join('\n')}
+
+function statsHtml(title,stats){
+  log(74,1);return `<div><span>${title} pixels</span><b>${formatInteger(stats.pixels)}</b></div><div><span>Average R / G / B</span><b><i class="r">${stats.average[0].toFixed(1)}</i> / <i class="g">${stats.average[1].toFixed(1)}</i> / <i class="b">${stats.average[2].toFixed(1)}</i></b></div><div><span>Channel share R / G / B</span><b>${stats.share.map(value=>(value*100).toFixed(2)+'%').join(' / ')}</b></div><div><span>Sum R / G / B</span><b>${stats.sum.map(formatInteger).join(' / ')}</b></div><div><span>Min R / G / B</span><b>${stats.min.join(' / ')}</b></div><div><span>Max R / G / B</span><b>${stats.max.join(' / ')}</b></div>`;
+}
+
+function renderResults(){
+  log(75,1);const withResults=state.circles.filter(circle=>circle.result);if(!withResults.length){ui.results.innerHTML='<p>No RGB reading yet.</p>';log(75,2);return}ui.results.innerHTML=withResults.map(circle=>{const result=circle.result,center=result.center;return `<article class="result"><h3>Circle ${circle.id}${result.clicked?' · read then clicked':''}</h3><p>Center ${center.x.toFixed(1)}, ${center.y.toFixed(1)} · radius ${center.radius.toFixed(1)} px · ${center.source} · ${result.at}</p><div class="stats">${statsHtml('r core',result.core)}</div><details><summary>2r full circle</summary><div class="stats">${statsHtml('2r',result.outer)}</div></details><details><summary>r → 2r annulus</summary><div class="stats">${statsHtml('annulus',result.annulus)}</div></details><details><summary>16-bin RGB histograms</summary><pre>CORE\n${histogramText(result.core)}\n\n2R\n${histogramText(result.outer)}\n\nANNULUS\n${histogramText(result.annulus)}</pre></details></article>`}).join('');log(75,3);
+}
+
+function renderPositions(){
+  log(105,1);if(!state.circles.length){ui.positions.innerHTML='<p>No circles yet.</p>';return}ui.positions.innerHTML=state.circles.map(circle=>{const layout=centerFor(circle,false),visual=circle.calibrated&&circle.calibrated.revision===circle.revision?circle.calibrated:null,delta=visual?' · Δ '+(visual.x-layout.x).toFixed(1)+', '+(visual.y-layout.y).toFixed(1)+' px · '+(visual.confidence*100).toFixed(0)+'%':' · not visually found';return '<div class="position"><strong>#'+circle.id+'</strong><span>Layout center / radius</span><b>'+layout.x.toFixed(1)+', '+layout.y.toFixed(1)+' / '+layout.radius.toFixed(1)+' px</b><span>Screenshot feedback</span><b>'+(visual?visual.x.toFixed(1)+', '+visual.y.toFixed(1):'—')+delta+'</b></div>'}).join('');log(105,2);
+}
+
+function updateControllerButton(key,handle,text,color){
+  log(106,1);if(!state.controller||!handle||state.controller[key]===text)return;state.controller[key]=text;bridgeAsync(handle,'setText',[text]).then(()=>bridgeAsync(handle,'setBackgroundColor',[signedColor(color)])).catch(error=>trace('CONTROLLER BUTTON UPDATE FAILED',error.message));
+}
+
+function updateControllerText(){
+  log(76,1);if(!state.controller)return;const selected=state.selectedId==null?'—':'#'+state.selectedId,text='MODE '+state.overlayMode+' · '+state.circles.length+' · '+selected+' · L'+(state.live.enabled?'ON':'OFF')+' · S'+(state.live.feedback?'ON':'OFF');if(state.controller.lastText!==text){state.controller.lastText=text;bridgeAsync(state.controller.status,'setText',[text]).catch(error=>{log(76,2);trace('CONTROLLER TEXT FAILED',error.message)})}updateControllerButton('lastLive',state.controller.liveButton,state.live.enabled?'LIVE ON':'LIVE OFF',state.live.enabled?0xff138759:0xff394251);updateControllerButton('lastFeedback',state.controller.feedbackButton,state.live.feedback?'SELF ON':'SELF OFF',state.live.feedback?0xff8a5b16:0xff394251);
+}
+
+function renderState(){
+  log(77,1);ui.mode.textContent=state.overlayMode;ui.count.textContent=String(state.circles.length);ui.selected.textContent=state.selectedId==null?'none':'#'+state.selectedId;ui.action.textContent=state.busy?(ui.action.textContent==='idle'?'busy':ui.action.textContent):(state.captureOwner||'idle');ui.liveState.textContent=state.live.enabled?'ON':'OFF';ui.feedbackState.textContent=state.live.feedback?(state.overlayMode==='HIDDEN'?'ON · paused':'ON'):'OFF';ui.frameState.textContent=String(state.live.frames);ui.foundState.textContent=state.live.found+' / '+state.circles.length;const disabled=state.busy;[ui.start,ui.add,ui.remove,ui.accessibility,ui.calibrate,ui.place,ui.visual,ui.read,ui.click,ui.both].forEach(button=>button.disabled=disabled);ui.destroy.disabled=false;ui.hidden.disabled=false;ui.remove.disabled=disabled||!state.circles.length;ui.calibrate.disabled=disabled||!state.circles.length;ui.read.disabled=disabled||!state.circles.length;ui.click.disabled=disabled||!state.circles.length;ui.both.disabled=disabled||!state.circles.length;ui.liveOn.disabled=disabled||state.live.enabled;ui.liveOff.disabled=!state.live.enabled;ui.feedbackOn.disabled=disabled||state.live.feedback;ui.feedbackOff.disabled=!state.live.feedback;updateControllerText();scheduleDebug();log(77,2);
+}
+
+async function openAccessibilitySettings(){
+  log(78,1);await allowNative();const intent=nativeNew('android.content.Intent',['android.settings.ACCESSIBILITY_SETTINGS']);try{await bridgeAsync(0,'startActivity',[intent]);setStatus('Accessibility settings opened. Enable HTML Realizer Service, then return.')}finally{dropToken(intent)}log(78,2);
+}
+
+function fail(error){
+  log(79,1);const message=error?.message||String(error);state.lastError=message;trace('FAIL',error?.stack||message);setStatus(message,true);state.busy=false;ui.action.textContent='idle';renderState();console.error(error);log(79,2);
+}
+
+ui.start.addEventListener('click',()=>startOverlay().catch(fail));
+ui.add.addEventListener('click',()=>spawnCircle().catch(fail));
+ui.remove.addEventListener('click',()=>removeSelectedCircle().catch(fail));
+ui.destroy.addEventListener('click',()=>{try{destroyOverlaysNow()}catch(error){trace('DESTROY NOW FAILED',error.message)}destroyOverlays().catch(fail)});
+ui.place.addEventListener('click',()=>setOverlayMode('PLACE').catch(fail));
+ui.visual.addEventListener('click',()=>setOverlayMode('VISUAL').catch(fail));
+ui.hidden.addEventListener('click',()=>setOverlayMode('HIDDEN').catch(fail));
+ui.liveOn.addEventListener('click',()=>setLiveView(true).catch(fail));
+ui.liveOff.addEventListener('click',()=>setLiveView(false).catch(fail));
+ui.feedbackOn.addEventListener('click',()=>setSelfFeedback(true).catch(fail));
+ui.feedbackOff.addEventListener('click',()=>setSelfFeedback(false).catch(fail));
+ui.calibrate.addEventListener('click',()=>calibrateAll().catch(fail));
+ui.read.addEventListener('click',()=>runAction('READ').catch(fail));
+ui.click.addEventListener('click',()=>runAction('CLICK').catch(fail));
+ui.both.addEventListener('click',()=>runAction('READ_CLICK').catch(fail));
+ui.accessibility.addEventListener('click',()=>openAccessibilitySettings().catch(fail));
+ui.copy.addEventListener('click',()=>copyDebug().catch(fail));
+ui.save.addEventListener('click',saveDebug);
+addEventListener('pagehide',()=>{log(80,1);state.live.enabled=false;clearTimeout(state.live.timer);destroyOverlaysNow()});
+addEventListener('beforeunload',()=>{log(80,2);state.live.enabled=false;clearTimeout(state.live.timer);destroyOverlaysNow()});
+addEventListener('error',event=>fail(event.error||new Error(`${event.message} at ${event.filename}:${event.lineno}:${event.colno}`)));
+addEventListener('unhandledrejection',event=>fail(event.reason||new Error('Unhandled promise rejection')));
+
+renderState();renderResults();renderPositions();trace('INITIALIZED',{bridge:!!window.mirror});
+if(!window.mirror)setStatus('App Realizer mirror bridge is not present. Paste/Realize this complete text inside the mirror /2 Android app.',true);
+else setStatus('Ready. HIDDEN is the initial state; no overlay window exists until Start / show controller is pressed.');
+log(1,8);
+</script>
+</body>
+</html>

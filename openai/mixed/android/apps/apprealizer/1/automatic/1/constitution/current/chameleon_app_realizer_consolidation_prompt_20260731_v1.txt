@@ -1,0 +1,340 @@
+You are consolidating and solidifying an Android project called Chameleon / HTML Realizer.
+
+PRODUCT AIM
+
+This is not merely a WebView wrapper and not a fixed-purpose automation app. It is an Android "app-making app": the user installs one APK, writes or loads HTML/JavaScript, and turns that HTML/JS into a capable Android application without recompiling the APK.
+
+The intended architecture has two layers:
+
+1. A small, trustworthy native Kotlin shell that owns the controls and Android entry points that must remain available even if the loaded HTML is blank, broken, hostile, navigated away, stuck in a JavaScript loop, or crashes the WebView renderer.
+2. A general JavaScript-to-Android capability runtime. Most app-specific UI, rules, automation, and behavior belong in HTML/JS. Kotlin should provide general reflection, lifecycle, permission, background, and OS-component gateways rather than hardcoding each future app.
+
+The design goal is "origami": a few composable primitives should unfold into many capabilities. Extend existing argument-driven pipes instead of creating a separate wrapper system for every feature.
+
+SOURCE PACKET AND BASELINE RULES
+
+Freshly read the complete supplied files before proposing or writing code. Do not rely on summaries or earlier impressions:
+
+- main.kt and AndroidManifest.xml: the original zero-regression baseline, especially its native settings shell, sandbox/password state, Internet control, domain exceptions, Blacklist/Graylist/Whitelist editors, settings visibility/recovery behavior, legacy K.* bridge facade, and basic accessibility read/tap functions.
+- testredo1i.kt and AndroidManifesttestredo1i.xml: the main generalized-runtime reference, especially its single persistent/reparentable WebView, epoch-scoped trust and handles, K.q call grammar, typed overload resolution, varargs, proxies, ports, event delivery, lifecycle cleanup, foreground runtime, notification events, content/file/broadcast portals, MediaProjection callbacks, accessibility events, and renderer recovery.
+- maintest2.kt and AndroidManifesttest2.xml: a reference for preserving the original shell while adding native Android portals.
+- maintestredo1h.kt, maintest1.kt, AndroidManifesttestredo1h.xml, AndroidManifesttestredo1.xml, accessibility_configtest1.xml, and accessibility_config.xml: comparison/reference material. Do not merge them blindly.
+
+Before modifying anything, produce a short capability/regression matrix for original vs Test2 vs I. Then implement a new candidate without overwriting any supplied source. Do not call the candidate a new base or approved version. Use a neutral temporary candidate name unless the user supplies an exact filename.
+
+NON-NEGOTIABLE PRODUCT BOUNDARY
+
+The native Kotlin shell is permanent product functionality. It must not be replaced by an HTML settings page and must not depend on the reflection bridge.
+
+At minimum, native UI must always provide:
+
+- Open/reload the exact default HTML editor.
+- Bridge ON/OFF master switch.
+- Sandbox ON/OFF.
+- Password/authentication controls.
+- Cut HTML Internet ON/OFF.
+- Internet/domain exceptions editor.
+- Blacklist editor.
+- Graylist editor.
+- Whitelist editor.
+- Allow once / Always allow / Block decisions for gray or unmatched reflection requests.
+- Current page/runtime/trust state.
+- Entry points to relevant Android permission and special-access settings.
+- Stop background runtime.
+- Revoke the current page epoch, handles, callbacks, proxies, and temporary grants.
+- Destroy/recreate/recover the WebView and return to the default editor.
+- Original settings-button visibility modes and an emergency way to reveal/recover controls.
+- Native log/status export sufficient to diagnose bridge rejection, renderer death, dropped events, service state, and permission failures.
+
+Put the control surface in native Android views, such as a native dialog, sheet, overlay, or dedicated native screen above/outside the WebView. The exact layout may improve, but the controls and recovery path may never live only inside realized HTML.
+
+The native settings/recovery control must:
+
+- Remain above the WebView.
+- Respect status-bar, navigation-bar, display-cutout, and phone safe-area insets.
+- Remain operable when the page is blank, contains invalid HTML/JS, calls document.open/write/close, navigates externally, blocks its own DOM, or loses its renderer.
+- Never require K, JavaScript, DOM access, or a cooperating page to open.
+- Provide a reliable recovery gesture or key sequence if the control was intentionally hidden.
+
+EXACT DEFAULT HTML
+
+Use the following as the exact default HTML. Preserve it byte-for-byte, including the title, styles, text, and the word "characters". Do not replace it with the larger editor from I, do not inject the security controls into it, and do not require bridge access for Realize to work.
+
+```html
+<!DOCTYPE html><title>HTML Realizer</title><style>body{margin:0;padding:4px;background:#111;font-family:monospace}div{min-height:40vh;background:#222;color:#eee;border:solid #444;padding:8px;white-space:pre-wrap;margin-bottom:4px;overflow:auto}button{border:0;background:#058;color:#fff;width:100%;height:5vh;font-size:2vh}</style><div id=i contenteditable="plaintext-only" oninput="c.textContent=i.textContent.length"></div><button onclick="var code=i.textContent;document.open();document.write(code);document.close()">Realize (<b id=c>0</b> characters)</button>
+```
+
+The native recovery action must be able to reload this exact editor even after realized content fails completely.
+
+BRIDGE, SANDBOX, AUTHENTICATION, AND POLICY MUST BE DISTINCT
+
+Do not collapse Bridge ON/OFF, Sandbox ON/OFF, authentication, and the three reflection lists into one ambiguous trust button.
+
+Required state semantics:
+
+1. Bridge OFF
+   - All privileged JavaScript-to-native operations are disabled regardless of sandbox or password state.
+   - Every native bridge entry point must enforce the master state; security must not depend on merely deleting a JS property.
+   - Turning the bridge off immediately bumps/revokes the active epoch and releases page-owned handles, leases, callbacks, proxies, queued deliveries, temporary hosts, and service registrations created for that epoch.
+   - Existing HTML/JS and the default Realize action continue to work as ordinary WebView content.
+   - If physical removeJavascriptInterface/addJavascriptInterface requires a reload to become visible, still enforce the native gate immediately and document the reload behavior.
+
+2. Bridge ON + Sandbox ON
+   - The bridge may expose only minimal non-privileged status/version information.
+   - Reflection, Android service ports, accessibility, notifications, files, sensors, alarms, vibration, MediaProjection, activity launching, and similar privileged operations return a stable security error such as E:SEC.
+   - No stale handle or previously authorized page may bypass the sandbox.
+
+3. Bridge ON + Sandbox OFF
+   - If a password is configured, the current document/session must authenticate before privileged calls are accepted.
+   - Once authenticated, every Java and Kotlin reflection operation passes through the same policy engine described below.
+   - A new external navigation/document trust boundary resets authentication, page epoch, handles, callbacks, queued events, and temporary grants. Do not let unrelated newly loaded content inherit an earlier page's authority.
+
+4. Cut HTML Internet is independent of all three states above.
+
+Persist user-selected global settings where appropriate, but do not persist per-document authentication, handles, callbacks, temporary approvals, or ephemeral trust across unrelated documents/process recovery.
+
+BLACKLIST / GRAYLIST / WHITELIST
+
+Implement all three as real native-editable policy lists. Do not preserve an accidental inversion of the old list names.
+
+Use this deterministic meaning and precedence:
+
+1. Blacklist match: hard deny. Blacklist wins over every other matching rule.
+2. Whitelist match: allow without a prompt, provided Bridge is ON, Sandbox is OFF, and authentication requirements are satisfied.
+3. Graylist match: show the native decision dialog.
+4. No match: prompt by default rather than silently allowing an unknown operation. A deliberate Whitelist entry such as ALL may be used to request unrestricted reflected power.
+
+The native decision dialog must provide:
+
+- Allow once: permit only this request and do not persist the decision.
+- Always allow: add the selected canonical scope to Whitelist and execute.
+- Block: add the selected canonical scope to Blacklist and deny.
+- Cancel/back/dismiss: deny without changing a list.
+
+Canonicalize requests before matching. Include at least operation kind, declaring class, member/property/field/constructor name, and resolved signature where known. Support useful scopes such as ALL, package, class, member, and full signature without relying only on accidental substring collisions. Make matching case/normalization behavior explicit.
+
+If legacy stored entries have different historical semantics, migrate or present them explicitly. Never silently reinterpret a saved allow as a deny or vice versa. Report the migration decision.
+
+Java reflection and Kotlin reflection must use the same Blacklist/Graylist/Whitelist evaluation and the same audit/log path. A Kotlin-reflection route must not bypass a Java-reflection denial, and vice versa.
+
+CUT HTML INTERNET: EXACT SCOPE
+
+Add a native toggle labeled clearly as "Cut HTML Internet" or "Cut HTML Internet (WebView only)."
+
+When ON, it should block Internet requests initiated through normal HTML/WebView mechanisms as completely as the WebView APIs reasonably permit, including:
+
+- Top-level http/https navigation.
+- fetch and XMLHttpRequest.
+- Remote scripts, stylesheets, images, media, fonts, iframes, and subresources.
+- Service-worker-controlled requests where the Android WebView API exposes an interception point.
+- WebSocket or other renderer network paths if they can be reliably controlled without pretending an ineffective hook is a security boundary.
+
+Keep local editor/runtime schemes working, including the local base origin and required data/file/content/blob/about behavior where appropriate.
+
+The native Internet Exceptions list must:
+
+- Allow exact hosts and their subdomains only by documented matching rules.
+- Normalize case, whitespace, leading dots, trailing dots, and IDN representation deliberately.
+- Avoid false matches such as evil-example.com matching example.com.
+- Apply consistently to top-level and subresource WebView requests.
+- Support temporary session exceptions separately from persisted exceptions if the runtime already has both concepts.
+
+Critical intended limitation: this toggle controls HTML/WebView-originated Internet paths only. It must deliberately ignore Internet access performed through the enabled reflection bridge, such as reflected java.net APIs, sockets, platform networking services, or a reflected HTTP client. Do not add reflection-class blocks merely because Cut HTML Internet is ON. Reflection-originated networking remains governed by Bridge ON/OFF, Sandbox/authentication, Blacklist/Graylist/Whitelist, Android permissions, and platform restrictions.
+
+This means Cut HTML Internet is not a device firewall and is not a security boundary against HTML that has already been granted unrestricted reflection. State that accurately in native UI/help and in the test report. Also do not unnecessarily block the native shell's own lifecycle/control operations.
+
+Measure the real coverage of WebView interception. If a renderer path such as WebSocket cannot be reliably blocked by the available WebView hooks, report that exact limitation instead of claiming total isolation. Prefer a compact native solution; do not add a large networking stack solely to simulate a firewall unless the user explicitly approves it.
+
+GENERAL REFLECTION BRIDGE
+
+Preserve the original legacy K.* JavaScript facade for zero regression, but implement it as a compatibility facade over one generalized core. Also preserve and improve I's generalized K.q-style route. Do not maintain two independent heaps, security systems, callback systems, or overload resolvers.
+
+The unified bridge must support, where Android/platform restrictions permit:
+
+- Class lookup.
+- Constructor calls.
+- Static and instance method calls.
+- Public field get/set and array construction retained from the original bridge.
+- Kotlin functions, properties, constructors, object/companion access, and Kotlin-specific callable/property operations when kotlin-reflect provides real additional capability.
+- Reliable overload selection using typed coercion and deterministic scoring.
+- Primitive/boxed values, nullability, enums, chars, numeric conversions, arrays, and varargs.
+- Object handles with explicit retain/release.
+- Epoch-scoped handles so stale pages cannot reuse old objects.
+- Interface proxies and asynchronous callbacks/events into JS.
+- Stable error codes plus inspectable underlying exception information.
+- Activity/main-thread dispatch where Android requires it.
+- General live ports such as app context, current Activity, WebView, accessibility service, notification listener, runtime service, projection, and other active Android entry points.
+- Port-ready/closed lifecycle events.
+- Bounded event queues, drop accounting, cleanup, and no unbounded object retention.
+- Renderer recovery and Activity re-parenting without parallel WebViews unless a separately justified capability truly requires one.
+
+Kotlin reflection is required, but do not add it cosmetically. Demonstrate at least one Kotlin-only or Kotlin-better operation that Java reflection does not model cleanly. Quantify the release APK size cost of kotlin-reflect and any other dependency. If a lighter architecture can supply the requested Kotlin capability without losing it, explain and use it. Do not sacrifice readable role-bearing identifiers or create lexical minification merely to reduce size.
+
+Reflection does not bypass Android permissions, manifest declarations, hidden-API enforcement, scoped storage, MediaProjection consent, accessibility enablement, notification-listener enablement, root/ADB boundaries, or secure/protected content. Report these as platform limits, not bridge bugs.
+
+ANDROID CAPABILITY PORTALS
+
+Keep Kotlin code generic and small, but add native portals wherever Android requires a declared component, user-consent flow, lifecycle owner, callback receiver, or foreground-service type. All portals should feed the same port/event/epoch machinery rather than parallel ad-hoc bridges.
+
+Priority capabilities:
+
+1. Accessibility screen understanding and control
+   - Return a structured screen/window tree, not only text|centerX|centerY.
+   - Include text, content description, view ID, package/class, bounds, state flags, actions, child relationships, window metadata, and enough identity to find a node again safely.
+   - Emit accessibility events to JS.
+   - Click by node/action and by coordinate.
+   - Support long press, swipe, scroll, multi-stroke gestures, text entry/setText, focus, and global actions.
+   - Handle stale nodes and recycled AccessibilityEvent/AccessibilityNodeInfo objects correctly.
+   - Support accessibility screenshots where available and MediaProjection for continuous/visual capture where necessary.
+
+2. Event-driven automation
+   - Notification posted/removed/ranking events.
+   - Dynamic BroadcastReceiver registration and completion.
+   - ContentObserver and FileObserver events.
+   - Activity results and runtime-permission results.
+   - Time/alarm triggers.
+   - Foreground/background runtime sufficient for user-authored JS to wait for conditions under Android's actual background limits.
+
+3. Actions needed for practical automations
+   - Vibration with API-appropriate fallbacks.
+   - Alarm/notification behavior when a JS condition becomes true.
+   - Exact-alarm capability only through the required permission/special-access path, with a documented inexact fallback when unavailable.
+   - Intents, app launching, clipboard, files/content URIs, sensors, camera, microphone, location, and networking through the general bridge where permitted.
+
+4. Screen capture
+   - Correct MediaProjection consent and foreground-service lifecycle.
+   - Resize, visibility, stop, and error events.
+   - No reuse of invalid consent tokens or stale projections.
+
+The intended proof scenario is that HTML/JS can observe another app's screen or notifications, evaluate a condition, click/gesture when appropriate, and trigger vibration or an alarm, while the native shell remains recoverable.
+
+NATIVE PERMISSIONS AND SETTINGS SURFACE
+
+The native control plane must show actual state and launch the relevant Android settings/consent UI for capabilities such as:
+
+- Accessibility service.
+- Notification listener access.
+- Overlay permission.
+- Runtime permissions.
+- All-files access/scoped-storage alternatives.
+- Exact alarms.
+- Battery-optimization exemption where genuinely needed.
+- MediaProjection consent.
+- Foreground runtime state.
+
+Do not ask for every permission at startup. Request or route the user to permissions when the corresponding capability is used. Denial, revocation, and permanent denial must fail cleanly and remain recoverable.
+
+Manifest declarations and foreground-service types must correspond to real code paths. Do not declare a broad category merely because reflection could theoretically reach it. If the broad "general runtime" design requires a set of declarations, explain which actual tested path justifies each one and identify Play-policy consequences separately from technical capability.
+
+API AND COMPATIBILITY PRIORITIES
+
+- Android/API 36 behavior on the user's phone is the primary target and must receive full runtime validation.
+- API 37 is acceptable only when it adds a useful capability or validation path with zero observed regression to API 36.
+- Older Android support is secondary. Use version guards and fallbacks where they remain compact and do not weaken or slow the API 36 path.
+- Choose a realistic minimum SDK based on tested APIs/dependencies. Do not force modern libraries down to an unrealistically low minSdk, and do not raise minSdk merely for convenience without reporting what capability or code it saves.
+- Keep modern target-SDK behavior and Android permission/background restrictions accurate.
+
+PERSISTENCE, LIFECYCLE, AND RECOVERY
+
+- Prefer one persistent runtime WebView that can be safely re-parented between application/runtime context and Activity, if testing confirms it remains correct.
+- Do not create one Activity WebView plus another service WebView with separate bridge state unless a measured limitation makes that unavoidable.
+- Configuration change, Activity recreation, Activity close/reopen, renderer death, background/foreground transition, and service reconnect must not duplicate the runtime or leak the old Activity.
+- Page/navigation changes must revoke page-owned authority and objects at the correct trust boundary.
+- Retained Android callback objects must be released/unregistered when their epoch ends.
+- A foreground service must be started only through legal timing paths, publish its notification promptly, and stop cleanly.
+- Process death is allowed to end in-memory JS state, but reopening the app must always recover to a usable native shell/editor rather than a blank/bricked state.
+
+ARCHITECTURAL COMPRESSION / BLOAT RULES
+
+- Start from concrete overlap in the existing code.
+- Reuse and widen I's generalized K.q/heap/port/event/epoch path.
+- Route the legacy bridge facade into that core.
+- Route all Android component callbacks into the same event delivery path.
+- Route Java and Kotlin reflection through one policy/audit gate.
+- Keep convenience helpers thin; they may compose generalized bridge primitives rather than duplicate reflection.
+- Add native code only for permanent controls, platform-declared components, consent/permission gateways, lifecycle ownership, and performance-critical generic helpers.
+- Do not hardcode one Kotlin wrapper per Android feature when reflection or an existing generic port can express it.
+- Do not remove convenient, already-working APIs and call that "no regression" merely because a sophisticated user could theoretically rebuild them from raw reflection.
+- Preserve descriptive identifiers and readable structure. Architectural compression is desired; lexical minification is not.
+- Report changed characters/lines, method count where practical, dependency/APK size changes, and every deliberately removed mechanism.
+
+MANDATORY TESTING
+
+Compile checks alone are insufficient. Build and run the candidate in an emulator, prioritizing API 36. Use API 37 as an additional test only if it has no API 36 side effect. When practical, inspect runtime/service/process state through adb and a rooted emulator, but do not treat root-only success as ordinary app success.
+
+At minimum test and report:
+
+1. Default/recovery UI
+   - Fresh install opens the exact default HTML.
+   - Character count and Realize work.
+   - Invalid HTML, thrown JS errors, blank page, document.open/write/close, external navigation, infinite JS loop, renderer kill, and reload do not remove native controls.
+   - Native "reload default editor" and "recreate WebView" recover the app.
+   - Settings control avoids status bar/display cutout and survives rotation/recreation.
+
+2. Bridge master switch
+   - Bridge OFF rejects every old/stale native entry point immediately.
+   - Existing handles, callbacks, proxies, event deliveries, and temporary grants are revoked.
+   - Ordinary HTML continues running.
+   - Re-enabling requires a fresh epoch/authentication and cannot resurrect stale handles.
+
+3. Sandbox/password/list policy
+   - Sandbox ON blocks privileged calls.
+   - Password/auth reset works at document boundaries.
+   - Blacklist wins on overlaps.
+   - Whitelist allows.
+   - Graylist and unmatched calls prompt.
+   - Allow once does not persist; Always allow and Block persist to the correct lists.
+   - Cancel/dismiss denies.
+   - Java and Kotlin reflection produce the same policy result.
+
+4. Cut HTML Internet
+   - With cut OFF, ordinary HTML networking works.
+   - With cut ON, test top-level navigation, fetch, XHR, remote script, stylesheet, image, iframe, media/font where practical, service worker, and WebSocket.
+   - Exact exception host and subdomain work; deceptive suffix hosts do not.
+   - Local default editor/Data/File/Blob behavior needed by the app still works.
+   - With Bridge ON + Sandbox OFF + policy approval, a reflected java.net or equivalent network path still works while Cut HTML Internet is ON. This is the intended scope separation.
+   - Report every renderer path the app cannot reliably intercept.
+
+5. Reflection
+   - Constructors, static/instance overloads, fields, arrays, varargs, enums, primitive/boxed conversion, null, handles, retain/release, proxies/callbacks, async calls, and errors.
+   - A real Kotlin function/property/object/companion case.
+   - Epoch cleanup and stale-handle rejection.
+   - Main-thread-required Android call.
+
+6. Accessibility and automation
+   - Read a real other-app accessibility tree.
+   - Find a node, click it, coordinate tap, long press/swipe, scroll, text action, and global action.
+   - Receive accessibility events.
+   - Handle service disabled/re-enabled and stale nodes.
+   - Capture a screen through accessibility screenshot where supported and through MediaProjection where appropriate.
+
+7. Events/background actions
+   - Notification posted/removed.
+   - Broadcast, content, and file event.
+   - Background runtime survives Activity close within Android's allowed model.
+   - A JS condition triggers vibration and an alarm/notification.
+   - Permission denial/revocation, foreground-service timeout/stop, and process restart fail cleanly.
+
+8. Resource and regression checks
+   - No duplicate WebView, Activity leak, unbounded queue, leaked AccessibilityEvent/node, orphan MediaProjection, or stale service port.
+   - Original native controls and legacy K.* calls remain available.
+   - APK size and startup/runtime performance are compared with original, Test2, and I.
+
+For every test, distinguish: source-inspected, compiled, emulator-verified, device-only/unverified, failed, or platform-limited. Do not write "works" based only on the presence of a method or permission.
+
+REQUIRED DELIVERABLES
+
+Return:
+
+1. The pre-change capability/regression matrix.
+2. A concise architecture/data-flow explanation showing native shell, WebView, unified bridge/policy, heap/epoch/events, and Android portals.
+3. Full candidate Kotlin source, full matching AndroidManifest.xml, and full matching accessibility_config.xml. Do not provide only fragments if the goal is an installable candidate.
+4. Any necessary Gradle dependency/config changes, including the exact kotlin-reflect size impact measured on the release APK.
+5. A surgical summary of every change and which baseline requirement it preserves.
+6. Build commands and build results.
+7. Emulator/runtime test matrix with concrete evidence and unresolved failures.
+8. APK/code-size comparison and a bloat audit identifying duplicated or rejected mechanisms.
+9. Known Android/platform limits and any feature that remains only theoretical.
+10. A final zero-regression checklist against the original native UI/UX and bridge conveniences.
+
+Do not overwrite, delete, rename, or call any existing file obsolete. Do not remove the original native controls. Do not declare a candidate approved. If a material design choice cannot be inferred after the full source comparison, isolate that choice and ask the user; otherwise proceed through implementation and testing.

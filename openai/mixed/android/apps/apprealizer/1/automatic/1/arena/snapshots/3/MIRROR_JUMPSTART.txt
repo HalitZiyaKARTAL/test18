@@ -1,0 +1,486 @@
+MIRROR APP REALIZER V2 — JUMPSTART DESIGN NOTES
+=================================================
+
+This document describes the proposed `android-apps/app_realizer/2` snapshot.
+`/1` is intentionally left unchanged. `/2` is a suggestion/prototype for a
+more universal Android runtime kernel where HTML/JS is the app layer and the
+native Kotlin side is only the phone capability bridge.
+
+Core idea
+---------
+
+Install the Android app once. After that, pasted or loaded HTML can become many
+kinds of apps without changing the APK:
+
+- browser-like runtime
+- AI automation tool
+- app tester
+- video chat / remote help surface
+- phone controlled from PC
+- local WebGPU/WASM model runner
+- game/app vision/action loop
+- reminder/profile/scheduler
+- speech assistant
+- Termux-like shell/process bridge
+- root/ADB powered tool if those powers are granted
+- USB/ADB/Bugjaeger-like tool if HTML or loaded dex implements the protocol
+
+The bridge object exposed to JavaScript is:
+
+    mirror
+
+The intended primary interface is unified/logically-condensed:
+
+    mirror.exec(JSON.stringify({...}))
+    mirror.execAsync(JSON.stringify({...}), callbackId)
+    mirror.caps()
+    mirror.events(JSON.stringify({...}))
+
+Older/direct helper methods exist too, but future HTML should prefer `mirror.exec`
+plus a small JS SDK wrapper.
+
+Mental model
+------------
+
+Think of the app as:
+
+    Kotlin/native = capability kernel / syscall surface
+    WebView HTML/JS = userland app logic
+    optional AI/PC = planner/controller
+    Android/Chrome/root/ADB/shell/USB/sensors/media = power backends
+
+Do not put policy in Kotlin. Let HTML decide policy:
+
+- whether to use WebView, Chrome, shell, root, adb, accessibility, or USB
+- whether to send cookies/authorization/custom headers
+- whether to strip tracking parameters
+- whether to use MediaProjection frames or accessibility tree
+- whether to stop expensive frame loops
+- whether to run a hidden page, WebGPU worker, WASM worker, or process
+
+Kotlin provides broad, stable paths. HTML composes behavior.
+
+Default boot document
+---------------------
+
+The default HTML remains a minimal editor/realizer. In `/2/main.kt` it is shaped
+like this:
+
+    var editable: String? = null
+    var html = editable ?: """<!DOCTYPE html>...full fallback editor..."""
+    fun bootHtml() = html
+
+On startup, local saved override is loaded into `editable`, then `html` becomes:
+
+    html = editable ?: """fallback document literal"""
+
+So the fallback is open in the declaration. Runtime HTML/reflection can set the
+string if desired. The helper methods are:
+
+    mirror.boot(html, reload)
+    mirror.bootGet()
+    mirror.bootReset(reload)
+
+Minimal JS SDK suggestion
+-------------------------
+
+Paste this into any runtime HTML as a convenience layer:
+
+    const phone = {
+      raw: mirror,
+      exec(o) {
+        return JSON.parse(mirror.exec(JSON.stringify(o)));
+      },
+      execAsync(o, cbId) {
+        return mirror.execAsync(JSON.stringify(o), cbId);
+      },
+      caps() {
+        const r = mirror.caps();
+        return r.startsWith('V') ? JSON.parse(r.slice(1)) : { error: r };
+      },
+      events(max = 100) {
+        const r = mirror.events(JSON.stringify({ max }));
+        return r.startsWith('V') ? JSON.parse(r.slice(1)) : { error: r };
+      },
+      observe(...what) {
+        return this.exec({ observe: what.flat(), returnEvents: true });
+      },
+      act(...actions) {
+        return this.exec({ act: actions.flat() });
+      },
+      remember(file, value, compress = true) {
+        return this.exec({ remember: { file, value, compress } });
+      },
+      schedule(ms, payload) {
+        return this.exec({ schedule: { in: ms, payload } });
+      },
+      page(id, src, kind = 'html', visible = true) {
+        return this.exec({ page: { id, src, kind, visible } });
+      },
+      framePipe(config, cb = 0) {
+        const r = mirror.framePipeStart(JSON.stringify(config), cb);
+        return r.startsWith('V') ? JSON.parse(r.slice(1)) : { error: r };
+      },
+      mpFrame(config) {
+        const r = mirror.mpFrameEx(
+          config.l ?? -1, config.t ?? -1, config.r ?? -1, config.b ?? -1,
+          config.maxW ?? 320, config.quality ?? 60, config.format ?? 'jpg'
+        );
+        return r.startsWith('V') ? JSON.parse(r.slice(1)) : { error: r };
+      },
+      shell(cmd, timeout = 10000) {
+        const r = mirror.sh(cmd, '', timeout);
+        return r.startsWith('V') ? JSON.parse(r.slice(1)) : { error: r };
+      },
+      sys(mode, cmd, timeout = 10000) {
+        const r = mirror.sys(mode, cmd, '', timeout);
+        return r.startsWith('V') ? JSON.parse(r.slice(1)) : { error: r };
+      }
+    };
+
+Unified exec examples
+---------------------
+
+Observe screen/events/notifications/capabilities:
+
+    const state = phone.exec({
+      capabilities: true,
+      observe: ['screen', 'events', 'notifications', 'intent'],
+      returnEvents: true
+    });
+
+Act on the phone:
+
+    phone.exec({
+      act: [
+        { tap: [540, 1200] },
+        { click: 'OK' },
+        { input: ['Search', 'hello world'] },
+        { say: 'Done' },
+        { notify: [1, 'Mirror', 'Action complete'] }
+      ]
+    });
+
+Remember profile:
+
+    phone.exec({
+      remember: {
+        file: 'profile.json.gz',
+        value: JSON.stringify({ goals: ['hydrate', 'sleep earlier'] }),
+        compress: true
+      }
+    });
+
+Schedule reminder:
+
+    phone.exec({
+      schedule: {
+        in: 3600000,
+        payload: 'drink water'
+      }
+    });
+
+Run a shell command:
+
+    phone.exec({
+      act: [
+        { shell: 'id; uname -a', timeout: 5000 }
+      ]
+    });
+
+Use optional root or adb power if available/granted:
+
+    phone.exec({
+      act: [
+        { sys: { mode: 'su', cmd: 'id', timeout: 5000 } },
+        { sys: { mode: 'adb', cmd: 'settings list global', timeout: 5000 } }
+      ]
+    });
+
+Multiple pages / tabs / workers
+-------------------------------
+
+`/2` adds multiple WebView/page support. This allows:
+
+- visible UI page
+- hidden vision/model worker page
+- remote bridge page
+- tool page
+- experimentation pages
+
+Open a visible page:
+
+    mirror.pageOpen('ui', '<!doctype html><h1>Hello</h1>', 'html', true);
+
+Open a hidden worker/model page:
+
+    mirror.pageOpen('vision', '<!doctype html><script>function run(){return 1}</script>', 'html', false);
+
+Evaluate JS inside a page:
+
+    window.onC = (id, msg) => console.log('callback', id, msg);
+    mirror.pageEval('vision', 'run()', 7);
+
+Switch visible page:
+
+    mirror.pageShow('ui');
+
+Close a page:
+
+    mirror.pageClose('vision');
+
+List pages:
+
+    const pages = JSON.parse(mirror.pageList().slice(1));
+
+Video chat shape
+----------------
+
+Native does not implement WebRTC itself. That should be HTML's job. Native gives
+HTML the powers it needs:
+
+- WebView camera/mic permission grant
+- geolocation permission grant
+- media playback without gesture
+- multiple windows
+- foreground service path
+- MediaProjection consent and frame pipe for screen sharing
+- native fetch for signaling if browser fetch/CORS is a problem
+
+Simple video chat HTML skeleton:
+
+    <!doctype html>
+    <video id="local" autoplay playsinline muted></video>
+    <video id="remote" autoplay playsinline></video>
+    <textarea id="signal"></textarea>
+    <button onclick="start()">start</button>
+    <script>
+    let pc, dc;
+    async function start() {
+      const stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+      local.srcObject = stream;
+      pc = new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+      stream.getTracks().forEach(t => pc.addTrack(t, stream));
+      pc.ontrack = e => remote.srcObject = e.streams[0];
+      dc = pc.createDataChannel('mirror');
+      dc.onmessage = e => {
+        // Optional: receive remote command packet and execute on phone.
+        try { dc.send(mirror.exec(e.data)); } catch (err) { dc.send(JSON.stringify({ok:false,error:String(err)})); }
+      };
+      pc.onicecandidate = () => signal.value = JSON.stringify(pc.localDescription);
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+    }
+    async function accept(answerJson) {
+      await pc.setRemoteDescription(JSON.parse(answerJson));
+    }
+    </script>
+
+Screen-share / remote-help shape
+--------------------------------
+
+Use HTML WebRTC/DataChannel/WebSocket/etc. for transport. Use `mirror` only as
+power provider.
+
+1. Ask for screen-capture permission:
+
+    mirror.mp(10);
+
+2. After callback/user consent:
+
+    mirror.mpStart(0, 0, 0);
+
+3. Start efficient frame pipe:
+
+    const pipe = JSON.parse(mirror.framePipeStart(JSON.stringify({
+      l: 0, t: 0, r: 720, b: 1280,
+      maxW: 360,
+      quality: 55,
+      format: 'jpg',
+      fps: 15,
+      slots: 3
+    }), 0).slice(1));
+
+4. HTML sends latest frame through chosen transport:
+
+    async function sendLoop() {
+      const metaRes = await fetch(pipe.meta);
+      const meta = await metaRes.json();
+      const frameBuf = await fetch(meta.url).then(r => r.arrayBuffer());
+      // send frameBuf through WebRTC DataChannel, WebSocket, WebTransport, etc.
+      requestAnimationFrame(sendLoop);
+    }
+
+The app gives power to use WebRTC; HTML implements the networking/product logic.
+
+AI/game vision loop shape
+-------------------------
+
+For a local WebGPU/WASM model that watches a small window and acts:
+
+    mirror.mp(10);       // user grants once
+    mirror.mpStart(0,0,0);
+
+    const pipe = phone.framePipe({
+      l: 100, t: 200, r: 500, b: 600,
+      maxW: 128,
+      format: 'gray',
+      fps: 30,
+      slots: 3
+    });
+
+    async function loop() {
+      const meta = await fetch(pipe.meta).then(r => r.json());
+      const gray = await fetch(meta.url).then(r => r.arrayBuffer());
+
+      // Feed gray bytes to JS/WASM/WebGPU model.
+      const action = await model.decide(gray, meta.w, meta.h);
+
+      // Execute selected action.
+      phone.act(action);
+
+      // Learn from feedback/events.
+      const feedback = phone.observe('events', 'screen');
+      model.learn(feedback);
+
+      requestAnimationFrame(loop);
+    }
+
+If the game/content is inside the same WebView, do not use mirror for visual data.
+Read the canvas/video directly in JS for maximum speed. Use mirror only for phone
+I/O, memory, fetch, shell, etc.
+
+Chrome/app playing shape
+------------------------
+
+If a site works better in Chrome or has an existing login/session, use real Chrome
+as a surface and let mirror be eyes/hands:
+
+    phone.exec({ act: [
+      { openIn: { pkg: 'com.android.chrome', uri: 'https://accounts.google.com' } },
+      { waitFor: { q: 'Google', ms: 5000 } }
+    ]});
+
+Then use:
+
+- accessibility tree (`observe: ['screen']`)
+- frame pipe (`mpFrame`/`framePipe`)
+- click/type/swipe actions
+- learning logs
+
+This does not steal Chrome data. It drives Chrome as the user would, using whatever
+state Chrome already has.
+
+Native fetch / CORS / headers
+-----------------------------
+
+`mirror.fetch` performs native HTTP outside browser CORS. HTML controls headers.
+No special filtering is imposed by native policy.
+
+    const r = mirror.fetch(
+      'https://example.com/api?utm_source=x',
+      'POST',
+      JSON.stringify({
+        'User-Agent': 'mirror-runtime',
+        'Authorization': 'Bearer ...',
+        'Cookie': '...',
+        'Origin': 'https://desired-origin.example',
+        'Referer': 'https://desired-referer.example'
+      }),
+      JSON.stringify({hello:'world'}),
+      15000,
+      true,   // clean tracking params if desired
+      true,   // retained arg; native does not block sensitive headers
+      10_000_000
+    );
+
+Use this for signaling, model/resource downloads, API access, proxy-like behavior,
+or pages where browser CORS is a blocker.
+
+Shell/process/root/ADB shape
+----------------------------
+
+One-shot shell:
+
+    const r = phone.shell('id; ls -la /sdcard', 5000);
+
+Persistent process:
+
+    let start = phone.exec({ process: { start: 'sh', cwd: '/sdcard' } });
+    // Suppose it returns process id 1.
+    phone.exec({ process: { id: 1, write: 'echo hi\n' } });
+    let out = phone.exec({ process: { read: 1, clear: true } });
+    phone.exec({ process: { kill: 1 } });
+
+Optional root/ADB power:
+
+    phone.sys('su', 'id; input tap 100 200', 5000);
+    phone.sys('adb', 'shell input tap 100 200', 5000);
+
+The app cannot grant root/ADB. It is open to using those backends when available.
+
+USB / Bugjaeger-like direction
+------------------------------
+
+Current proposal includes:
+
+    mirror.usb()
+    mirror.usbList()
+
+`mirror.usb()` returns a UsbManager handle for reflection/dex use. `usbList()` gives
+a JSON summary of connected USB devices. A full Bugjaeger-like tool would still need
+HTML/WASM/dex code for USB permission, endpoint claiming, and ADB protocol. The
+kernel is open to that direction but not a full ADB client by itself.
+
+Self-modification / removing lag
+--------------------------------
+
+HTML can dynamically reduce load:
+
+- stop frame pipe: `mirror.framePipeStop(id)` or `mirror.framePipeStop(0)`
+- stop stream: `mirror.mpStreamStop()`
+- stop projection: `mirror.mpStop()`
+- stop sensor: `mirror.sensorStop(id)`
+- close page: `mirror.pageClose(id)`
+- kill process: `mirror.exec({process:{kill:id}})`
+- change boot document: `mirror.boot(html, true)`
+- reset boot document: `mirror.bootReset(true)`
+
+A future cleanup pass should add a single runtime manager:
+
+    mirror.exec({ runtime: { stats: true } })
+    mirror.exec({ runtime: { stop: ['framePipes','sensors','processes'] } })
+
+Important current gaps
+----------------------
+
+The `/2` proposal is powerful but still rough. Remaining high-value improvements:
+
+1. Unified runtime manager for stats/stop/profile.
+2. Unified event bus with cursors for all events.
+3. Backend auto-routing for actions: accessibility/root/adb.
+4. Runtime permission/fix negotiation.
+5. Binary file primitives for models/frame data/USB/ADB.
+6. USB bulk read/write primitives for true Bugjaeger-like HTML.
+7. Better structured JSON return format for `exec` results.
+8. Better page metadata/roles for worker/UI/remote/model pages.
+9. Frame pipe robustness: atomic metadata, cleanup, dropped frame counts, FPS stats.
+10. Optional JS SDK string stored/editable like boot document.
+
+Recommended HTML strategy
+-------------------------
+
+- Put intelligence/policy in HTML.
+- Use `mirror.exec` for small command/control transactions.
+- Use frame pipes or files for high-rate data.
+- Use WebView-native canvas/WebGPU directly when content is inside WebView.
+- Use Chrome/app automation when external app/browser compatibility is needed.
+- Use root/ADB/shell only when user/device grants that power.
+- Keep model/profile/action logs compressed in files.
+- Close pages, sensors, processes, and frame pipes when not needed.
+
+The intended final feeling is:
+
+    mirror = phone power kernel
+    HTML = self-modifying app/AI/runtime
+    Android/Chrome/root/ADB/shell/USB/media/sensors = optional backends

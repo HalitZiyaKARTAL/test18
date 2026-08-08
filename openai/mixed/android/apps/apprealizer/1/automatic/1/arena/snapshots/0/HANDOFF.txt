@@ -1,0 +1,329 @@
+MIRROR V2 HANDOFF
+=================
+
+Context
+-------
+
+This folder is a proposal/snapshot only:
+
+    android-apps/app_realizer/2/
+
+The original snapshot remains intentionally untouched:
+
+    android-apps/app_realizer/1/main.kt
+
+The branch/PR contains `/2` as the suggested next version. The user may manually
+copy/paste files instead of merging the PR.
+
+PR:
+
+    https://github.com/HalitZiyaKARTAL/test19/pull/1
+
+Primary files in /2
+-------------------
+
+    main.kt
+    manifest1.xml
+    accessibilityconfig.xml
+    accessibility_config.xml
+    strings.xml
+    MIRROR_JUMPSTART.txt
+    MIRROR_PARTS_CHEATSHEET.txt
+    HANDOFF.txt
+
+Main architectural intent
+-------------------------
+
+The app should be an install-once Android runtime/capability kernel. The real app
+logic lives in runtime HTML/JS/AI. Kotlin/native should expose stable phone powers
+through the JavaScript bridge object:
+
+    mirror
+
+Do not use old `K`; no legacy compatibility is desired.
+
+The desired mental model:
+
+    Kotlin/native = capability kernel / syscall layer
+    WebView HTML/JS = app/userland/AI logic
+    Android/Chrome/root/ADB/shell/USB/media/sensors = optional power backends
+
+The user specifically wants logical condensation/unification, not minified one-letter
+commands. Prefer semantic unified transactions:
+
+    mirror.exec(JSON.stringify({
+      observe: ['screen', 'events', 'notifications'],
+      act: [ { tap:[100,200] }, { say:'done' } ],
+      remember: { file:'profile.json.gz', value:'...', compress:true },
+      schedule: { in:3600000, payload:'drink water' },
+      returnEvents: true
+    }))
+
+Policy belongs to HTML, not Kotlin. Native should provide powers and paths, including
+powerful/unsafe paths if the user intentionally grants them. Examples:
+
+- custom headers including Cookie/Authorization
+- root/su
+- adb shell
+- USB manager and future USB bulk primitives
+- dynamic dex/native library loading
+- reflection
+- MediaProjection
+- accessibility automation
+
+Current v2 capabilities
+-----------------------
+
+The current `/2/main.kt` proposal includes broad raw connections:
+
+1. Primary bridge
+   - mirror.exec(json)
+   - mirror.execAsync(json, cbId)
+   - mirror.caps()
+   - mirror.events(json)
+
+2. Boot document
+   - simple fallback shape:
+       var editable: String? = null
+       var html = editable ?: """<!DOCTYPE html>..."""
+   - mirror.boot(html, reload)
+   - mirror.bootGet()
+   - mirror.bootReset(reload)
+
+3. WebView/pages
+   - multiple WebViews/pages/tabs
+   - pageOpen/pageEval/pageShow/pageClose/pageList
+   - WebView camera/mic/geolocation permission grant
+   - file/content access, media playback, mixed content, debugging, multiple windows
+
+4. Reflection/extension
+   - Java reflection with declared/private/inherited member scanning where allowed
+   - field/method/constructor caches
+   - Kotlin KClass handles/info when kotlin-reflect/full metadata is available
+   - classloader handle
+   - DexClassLoader loading
+   - native library loading
+
+5. Accessibility/app playing
+   - screen tree JSON
+   - event queue
+   - tap/swipe/gestures
+   - click/longClick/focus/input by query
+   - waitFor/playClick/currentApp
+   - can play Chrome or other apps as a user surface
+
+6. Chrome/browser strategy
+   - internal WebView for controllable programmable pages
+   - real Chrome can be launched/opened/played when Google/session/site compatibility matters
+   - openIn('com.android.chrome', url)
+   - no attempt to steal Chrome session; use Chrome naturally through UI automation if desired
+
+7. Native fetch/network
+   - mirror.fetch(url, method, headersJson, body, timeout, cleanTracking, sensitiveUnused, maxBytes)
+   - native HTTP avoids normal browser CORS
+   - HTML controls all headers; Cookie/Authorization are not blocked
+   - optional tracking query cleanup
+
+8. Shell/process/root/ADB
+   - one-shot sh
+   - persistent process sessions through exec process start/write/read/kill
+   - sys(mode, cmd, input, timeout) supports sh, su/root, adb, or custom prefix
+   - app cannot grant root/ADB, but is open to use them when available
+
+9. USB direction
+   - usb() returns UsbManager handle
+   - usbList() lists devices
+   - full Bugjaeger-like HTML still needs USB permission/bulk endpoint/ADB protocol helpers or HTML/dex implementation
+
+10. Media/video/screen/frame data
+   - mp(cbId) asks MediaProjection permission
+   - mpStart(w,h,dpi)
+   - mpFrame/mpFrameEx crop/downscale frame
+   - formats: jpg, png, gray, rgba/raw, filejpg/filepng/filegray/fileraw
+   - mpStreamStart callback frame stream
+   - framePipeStart/framePipeInfo/framePipeStop ring-buffer data plane for real-time use
+   - frame pipe writes latest frames to rotating cache files plus meta.json
+   - intended for WebGPU/WASM/JS vision loops and screen/video sharing transports
+
+11. Video chat / screen share
+   - native does not implement WebRTC library
+   - WebView gets getUserMedia permissions
+   - HTML implements RTCPeerConnection/signaling/UI
+   - mirror provides native fetch for signaling if needed
+   - mirror provides MediaProjection frame pipe for screen share / remote help
+
+12. Sensors/speech/notifications
+   - sensor(type, delay, cbId), sensorStop
+   - heart rate path via sensor type 21 if hardware/permission support exists
+   - say via TTS
+   - listen via SpeechRecognizer
+   - notify
+   - notification listener queue
+
+13. Storage/profile
+   - save/load/rm/keys small SharedPreferences storage
+   - fw/fr file storage, optionally gzip/base64
+   - zip/unzip helpers
+   - intended for profiles, timers, action logs, learning memory
+
+14. Scheduling/lifetime
+   - alarm(ms, payload)
+   - foreground BridgeService fg(true/false)
+   - lastIntent payload
+   - MainReceiver route back into Main
+
+15. Self-modification / performance shedding
+   - boot HTML can be replaced/reset
+   - close pages
+   - stop frame pipes
+   - stop MediaProjection/streams
+   - stop sensors
+   - kill processes
+   - turn foreground service off
+
+Important user clarifications already resolved
+---------------------------------------------
+
+- `/1` must stay unchanged. Work/suggestions go under `/2`.
+- No old `K` bridge compatibility. Use `mirror` only.
+- Default HTML should stay minimal; do not replace it with a heavy console.
+- The default HTML should be an open fallback literal, roughly:
+      html = editable ?: """<!DOCTYPE html>...full fallback code..."""
+- Logical condensation means semantic unification, not one-letter minification.
+- “resolve intents” meant understand the user's intent, not Android Intent only.
+- HTML should decide policy and power usage.
+- Do not block sensitive headers; app/user/HTML decides.
+- WebRTC should mostly be HTML; native gives permissions and screen/frame/data powers.
+- Chrome should be playable as an external app surface, especially for Google account/session flows, not internally copied/stolen.
+- Root/ADB should be optional power backends: the app can use them if the user/device grants/provides them.
+
+Docs already added
+------------------
+
+MIRROR_JUMPSTART.txt is the long conceptual guide and examples.
+MIRROR_PARTS_CHEATSHEET.txt is the practical method index.
+This HANDOFF.txt is the continuity summary.
+
+Read these before continuing:
+
+    android-apps/app_realizer/2/MIRROR_JUMPSTART.txt
+    android-apps/app_realizer/2/MIRROR_PARTS_CHEATSHEET.txt
+    android-apps/app_realizer/2/HANDOFF.txt
+
+Known rough areas / next best improvements
+------------------------------------------
+
+The current v2 is powerful but still rough. The next useful work is unification and
+ergonomics, not just adding random wrappers.
+
+Highest-value next tasks:
+
+1. Runtime manager
+   Add something like:
+
+       mirror.exec({ runtime:{ stats:true } })
+       mirror.exec({ runtime:{ stop:['framePipes','sensors','processes'], closePages:['vision'] } })
+
+   It should report pages, processes, sensors, frame pipes, projection state,
+   foreground state, handles, memory-ish stats, event queue sizes.
+
+2. Backend auto-routing
+   Actions should optionally choose backend:
+
+       { tap:[100,200], backend:'auto' }
+
+   Auto should try configured root/adb/accessibility routes depending available powers.
+   This turns root/ADB from raw shell access into a practical input backend.
+
+3. Unified event bus
+   Normalize all events into one event stream with ids/cursors:
+
+       { id, time, source:'sensor|speech|notification|accessibility|process|frame|intent', type, data }
+
+   Then mirror.events({ since, sources, max }) can be canonical.
+
+4. Permission/power negotiation
+   Add:
+
+       mirror.exec({ require:['accessibility','mediaProjection','microphone','notifications','bodySensors','root?','adb?'] })
+
+   Return missing capabilities and fix paths/settings actions/calls.
+
+5. File/binary primitives
+   Add binary-safe fileRead/fileWrite/fileList/fileInfo/fileDelete.
+   Needed for models, WASM, frame slots, ADB payloads, resources.
+
+6. USB bulk primitives
+   For Bugjaeger-like HTML:
+       usbRequest, usbOpen, usbBulkRead, usbBulkWrite, usbClose
+
+7. Frame pipe robustness
+   Atomic meta writes, dropped frame count, average FPS, latest seq, cleanup old files,
+   stride/format details for raw/gray, optional fixed names.
+
+8. Better structured exec return values
+   `exec` should normalize old OK/E/V/P results into structured JSON objects.
+
+9. Optional JS SDK string
+   Do not bloat default UI, but consider an editable/stored SDK string retrievable by:
+       mirror.sdkGet(), mirror.sdkSet(...)
+   HTML can opt into it.
+
+10. Page roles and message bus
+   Pages should have roles: main, worker, vision, remote, tool.
+   Add page metadata and page-to-page message/event support.
+
+Readiness assessment
+--------------------
+
+As of this handoff:
+
+- Raw capability coverage: strong (~8.5/10)
+- Ease/comfort for HTML authors: moderate (~6/10)
+- Real-time ML/game loops: improved with frame pipe, but needs robustness (~7/10)
+- Universal platform polish: not done (~6/10)
+
+The code gives HTML paths to almost all requested domains, but needs better unified
+runtime management and structured event/permission systems to feel truly comfortable.
+
+Potential risk/compile notes
+----------------------------
+
+This repository sandbox did not have an Android SDK/Gradle/emulator available, so the
+v2 source was not compiled here. Treat it as a source-level proposal that should be
+checked inside the real Android project.
+
+Likely things to verify in a real build:
+
+- compileSdk high enough for newer permissions/foreground service types
+- MediaProjection APIs and foreground-service requirements on target Android version
+- Accessibility screenshot API requires Android 11+
+- WebView WebGPU support depends on device/System WebView
+- POST_NOTIFICATIONS runtime permission on Android 13+
+- BODY_SENSORS runtime permission for heart rate
+- exact alarm policy/settings on newer Android
+- notification listener service requires user enablement
+- accessibility service requires user enablement
+- USB host permissions need additional flow for opening devices
+
+Branch/PR status
+----------------
+
+Work was committed and pushed to branch:
+
+    arena/019fbe59-test19
+
+PR opened:
+
+    https://github.com/HalitZiyaKARTAL/test19/pull/1
+
+The user may ignore the PR and manually copy files from `/2` if preferred.
+
+Closing note
+------------
+
+If another agent continues later, remember the core design principle:
+
+    Do not turn Kotlin into the app.
+    Keep Kotlin as mirror: a unified Android power kernel.
+    Let runtime HTML/JS/AI be the self-modifying app brain.

@@ -1,0 +1,19 @@
+App Realizer /3 milestone
+=========================
+
+This milestone was saved when the user said:
+
+    save /3 so i can remember it as state which had testable html with it
+
+Meaning:
+- /3 is a milestone snapshot copied from the current /0 latest state at that moment.
+- /3 includes the testable mirror /2 migrated circle overlay HTML under test_html/.
+- /1 remains original/live snapshot.
+- /2 remains the earlier preserved proposal state.
+- /0 remains the continuous latest working state for future edits.
+
+Included test HTML:
+
+    test_html/circle_overlay_live_feedback_20260801_v4_mirror2_safe_overlay.txt
+
+That HTML is intended for the mirror bridge, uses window.mirror, and avoids moving the main app WebView into an overlay.

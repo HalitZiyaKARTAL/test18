@@ -1,0 +1,123 @@
+MIRROR /0 KERNEL MAP
+====================
+
+This file explains the intended shape of /0 after the cleanup pass.
+
+First principles
+----------------
+
+mirror should be a small Android capability kernel, not the app itself.
+HTML/JS/AI is the app brain. Kotlin exposes primitive phone powers.
+
+The public bridge should stay conceptually small:
+
+  mirror.exec(json)        semantic transaction bus
+  mirror.execAsync(json, cb)
+  mirror.caps()            capability map
+  mirror.events(json)      event/state drain
+  mirror.run(text)         optional readable flow helper
+  mirror.gesture(json)     low-level multi-touch primitive
+  reflection handles       c/n/x/g/s/etc for escape hatch
+
+Everything else should be a thin wrapper or an implementation detail.
+
+Layer map
+---------
+
+1. Handle table
+   - Stores native objects as P<number> handles.
+   - Used by reflection and dynamic extension.
+
+2. Reflection
+   - Java/Kotlin class loading, method calls, fields, constructors, proxies.
+   - Escape hatch for things not covered by semantic exec.
+
+3. Exec transaction bus
+   - observe: screen/events/notifications/capabilities/intent
+   - act: tap/hold/swipe/gesture/open/launch/say/fetch/etc.
+   - remember: profile/file storage
+   - schedule: alarms
+   - process: shell sessions
+   - page: WebView pages/workers
+
+4. Gesture primitive
+   - Canonical macro building block.
+   - Kotlin should not own macro policy.
+   - HTML builds record/replay/learning on top.
+   - Stroke schema:
+       [
+         {"points":[[x,y],[x,y]], "start":0, "duration":300},
+         {"points":[[x,y]], "start":0, "duration":300}
+       ]
+   - Strokes with same start run together for multi-finger gestures.
+
+5. Observation
+   - Accessibility tree/events.
+   - Notification events.
+   - Intent payload.
+   - MediaProjection/frame pipe for pixels.
+
+6. Data plane
+   - Large/high-rate data should not go through exec JSON.
+   - Use framePipe/cache files for frames/video-ish data.
+   - Use process pipes/files for shell/binary data.
+
+7. Page manager
+   - Multiple WebViews for UI, hidden workers, model pages, remote-control pages.
+   - Main page should remain safe.
+
+8. Power backends
+   - Normal app APIs.
+   - Accessibility service.
+   - Chrome/external app playing.
+   - Shell/process.
+   - Optional su/root.
+   - Optional adb.
+   - USB manager and future USB bulk/ADB protocol helpers.
+
+9. Runtime safety
+   - /1 remains original.
+   - /0 is latest working state.
+   - /2 and /3 are frozen milestones.
+   - Accessibility kill sequence remains exact down/up/down/up.
+   - Avoid loose volume-count panic because normal media usage could trigger it.
+
+Cleanup decisions in this pass
+------------------------------
+
+Removed/de-emphasized from /0:
+
+- one-letter q mini-eval
+- one-letter e/r aliases
+- B alias for batch
+- macro wrapper logic
+
+Kept:
+
+- flow/run for readable human scripts
+- batch for compact machine scripts if needed
+- gesture as minimal kernel primitive for all macro systems
+- direct low-level reflection helpers as escape hatch
+
+Why macro wrapper was removed
+-----------------------------
+
+Macro recording/replay/learning belongs in HTML. Native only needs to execute
+generic gestures accurately. This keeps mirror from becoming a bloated macro app.
+
+HTML can implement:
+
+  tap(x,y,ms) -> [{points:[[x,y]], start:0, duration:ms}]
+  hold(x,y,ms) -> same with longer duration
+  swipe(...) -> path points
+  replay(recording) -> schedule mirror.gesture(...) calls
+
+Next recommended simplifications
+--------------------------------
+
+1. Normalize exec return values into structured JSON.
+2. Runtime manager: stats/stop/profile for pages/processes/sensors/frame pipes.
+3. Unified event bus with cursors and source/type/data events.
+4. Backend auto-routing for gestures: accessibility/root/adb.
+5. Binary file primitives and USB bulk primitives.
+6. Consolidate direct wrappers so most are thin calls into exec modules.

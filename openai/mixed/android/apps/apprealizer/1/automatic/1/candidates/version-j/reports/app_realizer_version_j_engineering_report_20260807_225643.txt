@@ -1,0 +1,323 @@
+#8 — 2026-08-07 — Europe/Istanbul
+
+APP REALIZER VERSION J — ENGINEERING, REGRESSION, AND TEST REPORT
+Candidate identifier: J-candidate-20260807
+Status: neutral installable candidate; not approved and not promoted as a baseline.
+
+EXECUTIVE RESULT
+
+Version J was implemented as a new project without overwriting any supplied source. It preserves the exact constitutional default editor and the permanent native control plane, consolidates the original K facade and the generalized q runtime onto one policy/heap/epoch/event core, and adds the Android components that require native declarations or consent owners.
+
+The source compiles for Android API 36 with and without kotlin-reflect. Release, debug, JVM unit tests, release vital lint, and debug lint all completed successfully. Five JVM tests passed; lint reported 0 errors and 15 warnings. The supplied installable is zip-aligned and signed with the standard Android debug certificate using APK Signature Scheme v3.
+
+API 36 runtime validation was attempted, but could not be completed on this host. There is no /dev/kvm. A software-emulated x86_64 API 36 guest mounted Android's dynamic partitions and started system services, but system_server repeatedly missed watchdog deadlines and restarted before Package Manager could finish an APK install. Therefore no candidate behavior is labeled emulator-verified below. This is an infrastructure-blocked runtime gap, not evidence that the app passed or failed those scenarios.
+
+TEST-STATE LEGEND
+
+- SOURCE-INSPECTED: implementation and control/data paths were reviewed in source.
+- COMPILED: Kotlin/resources/manifest were accepted by the API 36 toolchain.
+- JVM-TESTED: deterministic host-side unit test passed.
+- EMULATOR-VERIFIED: exercised in a running Android guest. No candidate row reached this state.
+- DEVICE-ONLY / UNVERIFIED: requires a stable Android runtime, real consent UI, another app, or hardware.
+- PLATFORM-LIMITED: Android/WebView does not expose a reliable implementation boundary.
+- INFRASTRUCTURE-FAILED: the test environment failed before the app scenario could execute.
+
+1. PRE-CHANGE CAPABILITY / REGRESSION MATRIX
+
+All entries in this section are source-inspected. “Present” does not imply runtime verification.
+
+Capability                         Original main.kt                 Test2 reference                         I reference                             Version J consolidation decision
+---------------------------------  -------------------------------  --------------------------------------  --------------------------------------  ----------------------------------------------
+Permanent native settings shell    Strong baseline                 Mostly retained                         Replaced/reduced relative to baseline    Preserve as permanent native UI above WebView
+Exact small default editor         Present                         Diverged in places                       Larger editor                           Preserve byte-for-byte; add a byte-level test
+Bridge / Sandbox / password split  Partial, with legacy semantics  Shell controls present                  Epoch/auth concepts present             Four distinct states; immediate native gates
+Black/Gray/White policy            Legacy matching/semantics       Incomplete generalized enforcement      No full original list UX                Canonical policy; Black > White > Gray/unmatched
+Gray/unmatched prompt              Limited/ambiguous               Limited                                 Not complete                            Native Allow once / Always / Block / cancel-deny
+Legacy K conveniences              Baseline c/n/x/u/g/s/a/p/etc.   Several conveniences/portals added      Generalized q superseded some surface   Retain facade; route it to the single core
+Typed reflection                   Basic and fragile overloads     Mixed                                   Stronger resolver, q grammar             Deterministic coercion, varargs, overload scoring
+Kotlin reflection                  Absent                          Absent                                  Absent                                  Real kotlin-reflect functions/properties/defaults
+Epoch-scoped handles/auth          Absent                          Partial                                 Present                                 Adopt and apply to all entry points
+Persistent/reparentable WebView    Activity-owned                  Activity + service duplication          Present                                 Exactly one primary runtime WebView
+Bounded events / drop accounting   Absent                          Portal-specific                         Present                                 One bounded urgent/normal delivery path
+Foreground/background runtime      Minimal                         Separate service/runtime paths          Present                                 RuntimeService reuses primary Core/WebView
+Accessibility tree/actions         Basic read/tap                  Partial portal                          Richer generalized path                  Structured snapshots, reacquisition, gestures
+Notifications/broadcast/content    Absent or thin                  Separate portal implementations         Present                                 Native portals feed the common event path
+MediaProjection lifecycle          Absent                          Present but raw API 36 compile issue     Present but raw API 36 compile issue     One-shot consent; service owns projection lifecycle
+WebView Internet cut               Original toggle/exceptions      Partial                                 Not equivalent to original              Preserve independently; cover exposed WebView hooks
+Renderer/native recovery           Native shell advantage          Partial                                 Recovery concepts present               Permanent gear + reload/recreate + volume recovery
+Audit/log export                   Limited                         Limited                                 Debug/event information                 Bounded native ring and export surface
+
+Comparison/Arena source decisions:
+
+- maintestredo1h.kt (“H”, Arena /4) contributed comparison ideas but contains an undefined controller `a`, unsafe bridge assumptions, and multiple WebView ownership. Those mechanisms were rejected.
+- maintest1.kt and the related accessibility configs contributed the 128-stroke gesture concept and comparison coverage. Gesture primitives were retained in the structured accessibility portal, not copied as a parallel bridge.
+- Arena /2's TSV entry route was retained as a thin facade over the same runtime.
+- Arena /3's separate accessibility-overlay modes were retained only where a separate overlay renderer is actually justified. That renderer exposes only O, is tied to the creating epoch, and is not a second application runtime.
+- Manifest/root/permission/stop helpers were salvaged as thin capability helpers. Broken controllers, multiple heaps, multiple policy engines, and per-feature reflection systems were rejected.
+
+2. ARCHITECTURE AND DATA FLOW
+
+Native shell
+  -> owns the always-available gear, safe-inset placement, visibility modes, volume-key recovery, exact editor recovery, policy editors, authentication controls, Android settings/consent entry points, stop/revoke/recreate, and log export
+  -> never requires DOM cooperation, K, or JavaScript to open
+
+Primary WebView
+  -> one process-persistent Core WebView held through MutableContextWrapper and reparented between Activity/runtime ownership
+  -> exposes K and mirror aliases to the same Bridge object
+  -> applies top-level, subresource, and service-worker WebView network policy
+  -> converts page/document trust boundaries, including document.open/write/close hooks, into epoch revocation
+
+Unified Bridge and PolicyEngine
+  -> checks Bridge master state, Sandbox, document authentication, then Black/White/Gray policy in that order
+  -> canonicalizes operation kind, declaring class, member, and resolved signature
+  -> routes legacy Java facade, q/k grammar, TSV, Java reflection, and Kotlin reflection through the same audit and decision path
+
+Heap / epoch / event core
+  -> epoch-scoped handles with retain/release and reference-aware cleanup
+  -> callbacks, interface proxies, live ports, and nested-async pins expire with the page epoch
+  -> fixed worker pool of 4; heap limit 4096; normal queue 1024; urgent queue 256; dropped-event accounting
+  -> main-thread dispatch (`!`), asynchronous calls, cleanup (`~`), and stable error prefixes share one executor path
+
+Android portals
+  -> RuntimeService, NotificationPortal, ProjectionService, AlarmPortal, BroadcastEvents, ContentEvents, FileEvents, and GlobalService own only the Android lifecycle/manifest/consent work that JavaScript cannot declare
+  -> callbacks feed the same Core port/event/epoch machinery
+  -> GlobalService snapshots and reacquires accessibility nodes instead of retaining recycled node/event objects
+
+3. MATCHING SOURCE DELIVERABLE
+
+The companion full-source text contains the complete matching project between explicit BEGIN/END boundaries: settings.gradle.kts, root/app Gradle files, ProGuard rules, full AndroidManifest.xml, strings, app-owned vector launcher icon, full accessibility_config.xml, Bridge.kt, Core.kt, GlobalService.kt, Main.kt, Policy.kt, Portals.kt, and both JVM tests. Machine-specific local.properties is intentionally omitted.
+
+Full-source SHA-256:
+389daf7687ccb662111c1d4939f78ab15a3ec8846c7c4b5c1dfde159794ff945
+
+A parser compared every one of the 17 sections with the live candidate project; all 17 matched byte-for-byte at report time.
+
+The default HTML constant ends with one LF and otherwise exactly matches the required 555-byte UTF-8 editor. DefaultEditorTest compares the required and implemented byte arrays, including title, styles, text, and “characters.”
+
+4. GRADLE CONFIGURATION AND KOTLIN-REFLECT COST
+
+Toolchain/configuration:
+
+- Android Gradle Plugin 8.13.2
+- Kotlin Android plugin 2.2.21
+- kotlin-reflect 2.2.21, controlled by -PincludeKotlinReflect=true|false
+- Java/JVM target 17
+- compileSdk 36; targetSdk 36; minSdk 30
+- R8 resource/code shrinking on release
+- No AndroidX runtime dependency
+
+Release comparison, same J source and release settings:
+
+Build                              APK bytes    DEX bytes    Methods   Classes
+---------------------------------  -----------  -----------  --------  -------
+J without kotlin-reflect             150,208      131,360      1,094      152
+J with kotlin-reflect, unsigned     1,134,819    1,115,584      7,448    1,238
+Exact kotlin-reflect delta            984,611      984,224      6,354    1,086
+Delivered reflect build, signed     1,144,458    1,115,584      7,448    1,238
+
+The dependency is not cosmetic. KotlinDynamic uses Kotlin callable/property metadata, objectInstance, companionObjectInstance, constructors, callBy/default arguments, mutable properties, and Kotlin parameter nullability. KotlinProbe/KotlinSample provide a build-time-preserved proof surface for Kotlin default arguments, object/companion access, property access, and a Kotlin function. Java reflection remains the fallback only when the optional reflect build is selected out.
+
+5. SURGICAL CHANGE SUMMARY
+
+- Created a separate Version J candidate; no supplied file was overwritten, deleted, renamed, or labeled obsolete.
+- Preserved the exact original editor and moved security/recovery controls exclusively into permanent native views.
+- Added a native gear above the WebView with WindowInsets/display-cutout handling, original visibility modes, volume recovery, and long-press editor recovery.
+- Separated Bridge OFF, Sandbox ON/OFF, document password authentication, and Cut HTML Internet into independent persisted/global or ephemeral/document states as appropriate.
+- Bridge defaults OFF; Sandbox defaults ON. Turning Bridge OFF bumps the epoch and releases page-owned authority immediately even if JavaScript still sees the interface until reload.
+- Replaced ambiguous list behavior with canonical scopes: all, package:, class:, member:, signature:. Matching is normalized and deterministic. Blacklist always wins; unmatched calls prompt.
+- Migrated old numeric list keys without silently inverting them: legacy entries are represented explicitly as `legacy:` substring rules in their historically corresponding lists.
+- Routed Java and Kotlin reflection through one PolicyEngine and DebugLog path.
+- Consolidated original K methods (sz, cls, c, n, x, u, g, s, a, p, del) and generalized q/k/tsv/cap methods onto one Core heap/resolver rather than retaining parallel runtimes.
+- Added deterministic overload/varargs scoring and coercion for primitives/boxed types, numbers, chars, enums, null, arrays, handles, and varargs.
+- Added bounded queues, drop counts, fixed workers, port-ready/closed events, explicit retain/release, nested async pinning, proxy cleanup, and epoch ownership.
+- Kept one primary runtime WebView. RuntimeService attaches to Core; it does not create a duplicate runtime.
+- Added a separately justified accessibility overlay WebView only; it exposes O, not K, and closes with its epoch.
+- Implemented WebView network cutting at navigation, subresource, and ServiceWorkerClient surfaces, with normalized IDN host matching and exact-host/subdomain rules that reject deceptive suffix matches.
+- Added structured accessibility windows/nodes, state/action metadata, safe reacquisition, global actions, setText/focus/scroll, coordinate gestures, up to 128 gesture strokes, screenshots, events, and emergency overlay recovery.
+- Added Android-declared notification, runtime, projection, alarm, broadcast, content, and file portals feeding the common event machinery.
+- Added an app-owned vector icon after packaging inspection found that a framework drawable reference produced a dangling icon resource in the first package attempt.
+- Added host tests for exact editor bytes and policy precedence/matching.
+
+6. BUILD COMMANDS AND RESULTS
+
+Environment used:
+
+JAVA_HOME=/workspace/scratch/099afdb81bd4/toolchain/jdk17
+ANDROID_HOME=/workspace/scratch/099afdb81bd4/toolchain/android-sdk
+ANDROID_USER_HOME=/workspace/scratch/099afdb81bd4/toolchain/android-home
+GRADLE_USER_HOME=/workspace/scratch/099afdb81bd4/toolchain/gradle-home
+
+Primary host gate, run offline from the candidate project:
+
+gradle --offline --no-daemon -PincludeKotlinReflect=true \
+  :app:assembleRelease :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+
+Result: BUILD SUCCESSFUL in 1m40s.
+
+- assembleRelease: PASS
+- assembleDebug: PASS
+- testDebugUnitTest: PASS, 5 tests, 0 failures, 0 errors, 0 skipped
+- lintDebug: PASS threshold, 0 errors, 15 warnings
+- release vital lint: PASS as part of release build
+
+Unit evidence:
+
+- DefaultEditorTest: 1/1 pass, byte-for-byte required editor
+- PolicyMatcherTest: 4/4 pass, including Black precedence, canonical scopes, legacy matching, and IDN/domain exception behavior
+
+Lint warnings retained for audit rather than hidden:
+
+- 1 BatteryLife/Play-policy warning for the explicit battery-optimization settings route
+- 2 intentional JavaScript-enabled warnings for the primary runtime and accessibility overlay WebViews
+- 5 static lifetime warnings associated with the intentionally persistent process Core/service ports
+- 7 SetTextI18n warnings for the compact native diagnostic/control labels
+
+The no-reflect release was then built with:
+
+gradle --offline --no-daemon -PincludeKotlinReflect=false :app:assembleRelease
+
+Result: BUILD SUCCESSFUL.
+
+Baseline build note: Original compiled from the supplied Kotlin under the same API 36 staging scaffold. Raw Test2 and I did not compile under Kotlin 2.2/API 36 because they call nonexistent WebView.isDestroyed; Test2 also dereferences a nullable MediaProjection result. For size-only comparison, separate staging copies—not the supplied inputs—were normalized by removing invalid isDestroyed checks and guarding the nullable projection result. Their size rows are therefore labeled normalized, not raw.
+
+7. EMULATOR / RUNTIME TEST MATRIX
+
+Environment attempt and evidence:
+
+- Google API 36 x86_64 system image and emulator 37.1.11 were used.
+- /dev/kvm is unavailable; acceleration was impossible.
+- A corrected PCI boot initrd allowed Android dynamic system/vendor partitions to mount and APEX/services to start under TCG software emulation.
+- Guest evidence included SDK 36, ABI x86_64, mounted userdata/metadata/system logical partitions, and system_server PIDs 670, 1385, and 1951 across watchdog restarts.
+- sys.boot_completed never became 1. Load remained about 6.65 after roughly 21 minutes. Package Manager transactions failed as system_server restarted.
+- The APK was not installed or launched. Every app-runtime scenario below therefore remains unverified.
+
+Scenario group                                      Evidence state
+--------------------------------------------------  ---------------------------------------------------------------
+Fresh install / exact editor / count / Realize      SOURCE-INSPECTED + COMPILED + exact bytes JVM-TESTED; runtime UNVERIFIED
+Invalid/blank/error/document.write recovery         SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+External navigation / infinite loop / renderer kill SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Native reload/recreate and gear recovery            SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Insets, cutout, rotation, Activity recreation       SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Bridge OFF immediate gate and epoch cleanup         SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Bridge re-enable / stale handle rejection           SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Sandbox/password/document-boundary reset            SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Black/White/Gray precedence                         SOURCE-INSPECTED + COMPILED + JVM-TESTED; prompt UI UNVERIFIED
+Allow once / Always / Block / cancel                SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Same policy for Java and Kotlin routes               SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Cut OFF WebView network                             SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Cut ON navigation/fetch/XHR/subresources/SW          SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Host/subdomain/IDN/deceptive-suffix exceptions      SOURCE-INSPECTED + COMPILED + JVM-TESTED; runtime UNVERIFIED
+Local data/file/content/blob/about behavior         SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+WebSocket cutting                                   PLATFORM-LIMITED; no reliable WebView interception hook
+Reflected java.net while Web cut is ON               SOURCE-INSPECTED separation; runtime UNVERIFIED
+Java constructors/methods/fields/arrays/varargs      SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Conversions/overloads/errors/handles/retain/release SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Proxy/callback/async/main-thread dispatch            SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Kotlin function/property/object/companion/defaults  SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Epoch cleanup / stale handle rejection              SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Other-app accessibility tree and node actions       SOURCE-INSPECTED + COMPILED; DEVICE-ONLY / UNVERIFIED
+Tap/long press/swipe/scroll/text/global action      SOURCE-INSPECTED + COMPILED; DEVICE-ONLY / UNVERIFIED
+Accessibility events/disable/re-enable/stale nodes  SOURCE-INSPECTED + COMPILED; DEVICE-ONLY / UNVERIFIED
+Accessibility screenshot / MediaProjection         SOURCE-INSPECTED + COMPILED; consent/device UNVERIFIED
+Notification posted/removed/ranking                 SOURCE-INSPECTED + COMPILED; DEVICE-ONLY / UNVERIFIED
+Broadcast/content/file events                       SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Background runtime after Activity close             SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+JS condition -> vibration/alarm/notification        SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Permission denial/revocation / service timeout      SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+Process restart / no stale ports or projection      SOURCE-INSPECTED + COMPILED; runtime UNVERIFIED
+No duplicate primary WebView / bounded queues       SOURCE-INSPECTED + COMPILED; runtime instrumentation UNVERIFIED
+APK installation and launch                         INFRASTRUCTURE-FAILED before candidate install
+
+The full emulator console/kernel log remains in the working evidence directory as toolchain/api36-runtime-full.log. It is environment evidence, not an app test result.
+
+8. APK / CODE SIZE AND BLOAT AUDIT
+
+Comparable shrunk release artifacts:
+
+Build                              APK bytes    DEX bytes    Methods  Classes  Qualification
+---------------------------------  -----------  -----------  -------  -------  ------------------------------
+Original baseline                      52,700       34,520      332       46  Raw supplied Kotlin
+Test2 baseline                         70,020       51,308      512       64  Normalized staging copy
+I baseline                             71,592       52,140      492       64  Normalized staging copy
+J without kotlin-reflect              150,208      131,360    1,094      152  Same J source/config
+J with kotlin-reflect, unsigned     1,134,819    1,115,584    7,448    1,238  Same J source/config
+J candidate, debug-signed           1,144,458    1,115,584    7,448    1,238  Delivered installable
+
+J without reflect is +97,508 bytes versus Original, +80,188 versus normalized Test2, and +78,616 versus normalized I. J with reflect (unsigned comparison) is +1,082,119, +1,064,799, and +1,063,227 bytes respectively. The kotlin-reflect dependency is the dominant bloat source.
+
+Production Kotlin/XML source is 3,181 lines and 138,434 bytes. With tests it is 3,242 lines and 141,035 bytes. The original main/manifest/accessibility trio is 334 physical lines and 20,382 bytes; the additive/topology delta is therefore +2,847 physical lines and +118,052 bytes. Because Version J splits one monolithic file into role-bearing modules and adds declared portals, a raw character diff would misrepresent moves as edits; these exact totals are the reproducible change measure.
+
+Compression decisions:
+
+- One primary WebView, one heap, one resolver, one PolicyEngine, one epoch authority, and one event delivery system.
+- Legacy APIs are adapters, not duplicate implementations.
+- Android portals contain lifecycle/declaration/consent work and forward into Core.
+- No networking dependency was added to simulate a false firewall.
+- No AndroidX framework was added.
+- No lexical minification or deliberately opaque identifiers were used.
+- The only second WebView is the accessibility overlay renderer; it is capability-scoped and cannot host the main K runtime.
+
+Rejected duplicated mechanisms:
+
+- Test2-style independent service WebView/runtime.
+- Arena controller/bridge copies and separate policy semantics.
+- Retained AccessibilityEvent/AccessibilityNodeInfo instances.
+- Per-feature reflection wrappers when the generalized bridge can express the operation.
+- A separate Kotlin security path or heap.
+
+9. KNOWN ANDROID / PLATFORM LIMITS
+
+- Cut HTML Internet is WebView-scoped, not a device firewall. It deliberately does not block approved reflected java.net, sockets, platform network services, native code, or another process.
+- WebSocket traffic cannot be reliably intercepted by the available WebViewClient/ServiceWorkerClient hooks; it is reported as platform-limited, not blocked.
+- JavaScriptInterface physical removal/addition may require reload before JavaScript property visibility changes, although every native entry point applies the Bridge gate immediately.
+- Android permissions, manifest declarations, hidden-API enforcement, scoped storage, SELinux, secure/protected content, accessibility enablement, notification-listener enablement, root/ADB boundaries, and foreground/background limits remain authoritative.
+- MediaProjection consent is one-shot and must not be reused. Projection behavior and secure-content capture require device validation.
+- Accessibility screenshots depend on platform support and service enablement; MediaProjection is required where appropriate.
+- Exact alarms may require special access and policy justification; the portal reports capability and uses an inexact fallback when exact scheduling is unavailable.
+- MANAGE_EXTERNAL_STORAGE, exact alarms, battery-optimization exemption, accessibility, notification listener, overlay access, and special-use foreground services have separate user-consent and Play-distribution policy consequences.
+- Generic SYSTEM_ALERT_WINDOW use remains available only through Android's permission model/general reflection; the built-in overlay is an accessibility overlay owned by GlobalService.
+- minSdk 30 intentionally leaves older devices secondary. Guards are present for newer APIs, but older-runtime validation was not performed.
+- Process death ends in-memory JavaScript state, handles, callbacks, proxies, queues, and temporary grants. Persisted editor/settings recover; JS heap continuity is not promised.
+- A malicious or stuck renderer may still consume resources until Android kills it; the native shell and volume recovery are designed to remain independent but require device verification.
+- API 36 runtime performance, startup, Activity leak behavior, background survival, and all end-to-end automation remain unresolved because the only available emulator could not maintain system_server under TCG.
+
+10. FINAL ZERO-REGRESSION CHECKLIST
+
+Requirement / convenience                             Candidate disposition                         Validation
+----------------------------------------------------  --------------------------------------------  ------------------------------------------
+Exact default editor                                  Preserved byte-for-byte                       JVM-TESTED + COMPILED
+Character count and native-independent Realize        Preserved in exact HTML                       SOURCE-INSPECTED; runtime UNVERIFIED
+Native settings above/outside WebView                 Preserved and expanded                        SOURCE-INSPECTED + COMPILED
+Bridge ON/OFF                                         Explicit master gate; default OFF             SOURCE-INSPECTED + COMPILED
+Sandbox ON/OFF                                        Independent; default ON                       SOURCE-INSPECTED + COMPILED
+Password/authentication                               Independent and document/epoch-scoped         SOURCE-INSPECTED + COMPILED
+Cut HTML Internet                                     Independent WebView-only toggle                SOURCE-INSPECTED + COMPILED
+Internet exceptions                                  Native editor; normalized host matching       JVM-TESTED + COMPILED
+Blacklist / Graylist / Whitelist                      Three real native editors                     JVM policy tests + COMPILED
+Allow once / Always allow / Block / cancel-deny       Native prompt and persistence path             SOURCE-INSPECTED + COMPILED
+Runtime/trust state                                   Native gear/status/log                         SOURCE-INSPECTED + COMPILED
+Android permission/special-access entries             Native settings surface                       SOURCE-INSPECTED + COMPILED
+Stop background runtime                              Native action                                 SOURCE-INSPECTED + COMPILED
+Revoke epoch/handles/callbacks/proxies/grants         Native action and immediate Bridge-off revoke SOURCE-INSPECTED + COMPILED
+Destroy/recreate/reload default                       Native recovery actions                        SOURCE-INSPECTED + COMPILED
+Settings visibility modes                            Retained                                      SOURCE-INSPECTED + COMPILED
+Emergency recovery                                   Volume key and accessibility emergency path   SOURCE-INSPECTED + COMPILED
+Native bounded diagnostics/export                     Added                                        SOURCE-INSPECTED + COMPILED
+Legacy K sz/cls/c/n/x/u/g/s/a/p/del                  Retained as facade over Core                  SOURCE-INSPECTED + COMPILED
+General q/k/TSV                                      Retained/consolidated                         SOURCE-INSPECTED + COMPILED
+Manifest/resources/root/permission/stop helpers      Retained as thin capability facade            SOURCE-INSPECTED + COMPILED
+Overlay/vibration/notification/alarm conveniences     Retained/added without a second policy core    SOURCE-INSPECTED + COMPILED
+Single primary runtime WebView                        Architectural invariant                        SOURCE-INSPECTED; runtime UNVERIFIED
+API 36 install/start/end-to-end behavior              No approval claim                             INFRASTRUCTURE-FAILED / UNVERIFIED
+
+INSTALLABLE ARTIFACT AUDIT
+
+Filename: app_realizer_version_j_candidate_20260807_224836.apk
+Size: 1,144,458 bytes
+SHA-256: 61e25cbef8e6378092ed99fc10a77ff29837343cdc4819bb2594cd7249516d95
+Package: a.htmlapprealizer
+Version: versionCode 10; versionName J-candidate-20260807
+SDK: min 30; target/compile 36
+Launcher: a.htmlapprealizer.Main
+Signature: standard Android Debug certificate; APK Signature Scheme v3 verified
+Distribution note: this debug-signed APK is for evaluation. A production release must be signed with the user's controlled release key and subjected to the unresolved real-device/API 36 matrix before any approval or baseline decision.

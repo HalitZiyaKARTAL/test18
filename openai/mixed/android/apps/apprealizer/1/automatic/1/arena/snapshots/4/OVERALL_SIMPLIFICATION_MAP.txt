@@ -1,0 +1,218 @@
+MIRROR /0 OVERALL SIMPLIFICATION MAP
+====================================
+
+This is the broader cleanup direction for the whole app, not just macros.
+
+Core rule
+---------
+
+mirror should expose a few orthogonal primitives. Everything else should be HTML/JS
+or thin wrappers.
+
+Wrong shape:
+
+    mirror.tap()
+    mirror.hold()
+    mirror.swipe()
+    mirror.macro()
+    mirror.fetchThing()
+    mirror.chromeThing()
+    mirror.testThing()
+    mirror.videoThing()
+    ... many specific product features ...
+
+Right shape:
+
+    mirror.exec(transactionJson)
+    mirror.events(queryJson)
+    mirror.caps()
+    mirror.gesture(strokesJson)
+    mirror.reflect/call low-level escape hatch
+    mirror.data pipes/files for large data
+
+Everything else should be implemented as JS SDK sugar or exec modules.
+
+Overall map from first principles
+---------------------------------
+
+A phone runtime needs five universal paths:
+
+1. Observe
+   - screen tree
+   - screen pixels/frame pipe
+   - notifications
+   - sensors
+   - speech results
+   - intents/share/deeplinks
+   - process output
+   - page events
+
+2. Act
+   - gestures/touch
+   - text input
+   - open/launch/share/intent
+   - speak/notify/schedule
+   - shell/process/root/adb/usb when available
+
+3. Remember
+   - profile
+   - logs
+   - model/cache files
+   - compressed snapshots
+   - boot document
+
+4. Extend
+   - Java/Kotlin reflection
+   - classloader/dex
+   - native libraries
+   - pages/workers
+   - process tools
+
+5. Transport/Data
+   - WebView bridge for small commands
+   - frame pipes/files for large/high-rate data
+   - process pipes
+   - native fetch
+   - HTML-controlled WebRTC/WebSocket/etc.
+
+All implementation should map into these, not become separate feature families.
+
+Desired public surface
+----------------------
+
+Minimal public surface:
+
+    mirror.exec(reqJson)
+    mirror.execAsync(reqJson, cbId)
+    mirror.events(queryJson)
+    mirror.caps()
+    mirror.gesture(strokesJson)
+    mirror.auth(password)
+
+Useful low-level escape hatches:
+
+    mirror.c / n / x / g / s / p / del   reflection handles
+    mirror.sh/sys/process                power/process path
+    mirror.pageOpen/pageEval/...         page path if exec wrappers are not enough
+
+But the canonical app-facing path should be exec.
+
+Exec module shape
+-----------------
+
+A clean exec request should look like:
+
+    {
+      "observe": ["screen", "events", "notifications", "capabilities"],
+      "act": [
+        {"gesture": [...]},
+        {"open": "https://example.com"},
+        {"say": "done"}
+      ],
+      "remember": {"file":"profile.json.gz", "value":"...", "compress":true},
+      "schedule": {"in":3600000, "payload":"drink water"},
+      "process": {"start":"sh"},
+      "page": {"id":"worker", "src":"...", "kind":"html", "visible":false},
+      "returnEvents": true
+    }
+
+Return should become structured JSON:
+
+    {
+      "ok": true,
+      "state": {...},
+      "results": [
+        {"ok": true, "value": ...},
+        {"ok": false, "error": {"code":"...", "message":"...", "fix":...}}
+      ],
+      "events": {...}
+    }
+
+Current code still mixes legacy V/P/E/OK returns. The next cleanup should normalize
+inside exec while leaving old direct helpers for compatibility with experiments.
+
+Subsystem consolidation targets
+-------------------------------
+
+1. Input / actions
+   Keep one primitive:
+       gesture(strokesJson)
+   Build tap/hold/swipe/macro in HTML or exec sugar.
+   Later add backend routing:
+       backend: auto | accessibility | root | adb
+
+2. Frames / media
+   Keep:
+       mp consent/start/stop
+       frame one-shot
+       framePipe data-plane
+   Avoid many competing frame APIs in user-facing docs.
+   Large data should use framePipe/files, not bridge JSON.
+
+3. Process / shell
+   Canonical:
+       process run/start/write/read/kill
+   sh/sys become thin convenience wrappers.
+
+4. Pages
+   Canonical:
+       page create/eval/show/close/list
+   Add roles later: main, worker, vision, remote, tool.
+
+5. Network
+   Canonical:
+       fetch request object
+   HTML decides headers/tracking/cookies.
+
+6. Reflection
+   Keep direct methods as syscall escape hatch.
+   Add exec.reflect later for structured reflection.
+
+7. Storage
+   Canonical:
+       file read/write/list/info/delete
+       profile save/load compressed
+   Current fw/fr/save/load are partial; binary primitives still needed.
+
+8. Runtime manager
+   Needed:
+       runtime stats
+       runtime stop {framePipes,sensors,processes,pages,projection}
+       runtime profile low_power/performance
+
+9. Event bus
+   Needed:
+       one event queue with ids/cursors/source/type/data
+   Current accessibility/notification/speech/sensor/process events are still too split.
+
+10. Permissions/power negotiation
+   Needed:
+       require [accessibility, mediaProjection, notifications, sensors, root?, adb?]
+   Return missing/fix info.
+
+What was simplified already
+---------------------------
+
+- Removed q one-letter mini-eval from /0.
+- Removed e/r aliases.
+- Removed B alias.
+- Removed macro wrapper logic.
+- Kept gesture as the minimal macro-capable primitive.
+- Kept run/flow as readable human script path for now.
+
+Next code refactor recommendation
+---------------------------------
+
+Do not add more wrappers. Next real code pass should:
+
+1. Introduce a small result-normalization helper:
+       ok(value), err(code,message,fix), legacyToJson(result)
+
+2. Make exec call module functions:
+       execObserve, execAct, execProcess, execPage, execRemember, execSchedule
+
+3. Move direct helpers to thin wrappers around module functions where possible.
+
+4. Add runtime manager and event bus before adding more capabilities.
+
+5. Keep /0 as latest working state; copy /0 to /4 only when user declares milestone.

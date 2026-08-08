@@ -1,0 +1,326 @@
+MIRROR /0 MANIFEST-FIRST FRACTAL DESIGN
+=======================================
+
+User intent
+-----------
+
+The desired design is close to:
+
+    adding/changing manifest capability should usually be enough
+
+Meaning Kotlin should not need a new hand-written feature for every Android power.
+The manifest declares what the app is allowed/able to do. mirror exposes generic
+ways for HTML to discover, request, route, and use those declared powers.
+
+This is the stronger version of the kernel idea:
+
+    manifest = capability declaration
+    mirror = capability resolver / adapter graph
+    HTML = policy and app logic
+
+Goal
+----
+
+If later the app adds a permission, feature, service, receiver, provider, or intent
+filter in the manifest, HTML should usually be able to:
+
+1. see it in mirror.caps/resources
+2. request/enable it if needed
+3. get a generic root/handle/resource for it
+4. use it through reflection/generic ops/events
+
+without Kotlin adding a special method like mirror.doNewFeature().
+
+Fractal rule
+------------
+
+Every Android capability should map to the same shape:
+
+    declared -> discovered -> requested/enabled -> opened/rooted -> read/write/call -> events -> closed
+
+Examples:
+
+    CAMERA permission
+      declared in manifest
+      caps shows permission state
+      request permission generically
+      HTML uses WebView getUserMedia or CameraManager via root/reflection
+
+    BODY_SENSORS permission
+      declared in manifest
+      caps shows permission state and sensor list
+      request permission generically
+      HTML opens sensor resource by type
+      events deliver values
+
+    NotificationListener service
+      declared in manifest
+      caps says settings-required/enabled
+      user opens settings
+      service events flow into event bus
+
+    Accessibility service
+      declared in manifest/xml
+      caps says enabled/disabled/fix settings action
+      service root exposed
+      gestures/screen/events available
+
+    USB host feature
+      declared in manifest
+      caps shows UsbManager/connected devices
+      generic USB permission/open/read/write should be adapter-level
+
+    New future permission
+      declared in manifest
+      caps lists it automatically from PackageInfo.requestedPermissions
+      requestPermissions can ask for it by string
+      HTML uses reflection/system roots to reach APIs
+
+Manifest-first primitives needed
+--------------------------------
+
+1. Manifest introspection
+
+mirror should be able to report:
+
+    requested permissions
+    permission grant states
+    declared features
+    activities/services/receivers/providers
+    intent filters when practical
+    foreground service types if practical
+    package name/version
+
+HTML can then see what the native APK declares.
+
+2. Generic runtime permission requester
+
+Instead of adding requestCamera(), requestAudio(), requestSensors(), etc.:
+
+    mirror.permissionRequest(JSON.stringify([
+      "android.permission.CAMERA",
+      "android.permission.RECORD_AUDIO",
+      "android.permission.BODY_SENSORS"
+    ]), cbId)
+
+Results go to event bus/callback.
+
+3. Generic settings/fix actions
+
+For powers that are not normal runtime permissions:
+
+    accessibility service
+    notification listener
+    exact alarms
+    overlay permission
+    battery optimization
+    usage stats
+    manage external storage
+
+caps should return fix paths:
+
+    { type:"settings", action:"android.settings.ACCESSIBILITY_SETTINGS" }
+
+HTML decides when to open them.
+
+4. Generic system service root
+
+Instead of one helper per service:
+
+    mirror.root("window")
+    mirror.root("sensor")
+    mirror.root("usb")
+    mirror.root("media_projection")
+    mirror.root("notification")
+    mirror.root("package")
+    mirror.root("content")
+
+This can call getSystemService generically and return a handle.
+
+5. Generic activity result / intent result bridge
+
+Many Android powers require starting an intent and receiving a result:
+
+    MediaProjection consent
+    file picker
+    document tree picker
+    account/login flows
+    settings screens
+
+Use one generic mechanism:
+
+    mirror.activityStartForResult(intentSpec, requestId)
+
+and route results into the event bus:
+
+    { source:"activityResult", requestId, resultCode, dataHandle }
+
+6. Generic broadcast receiver path
+
+Manifest receivers or dynamic receivers should route broadcasts to the event bus.
+A generic receiver can report:
+
+    action
+    extras
+    data URI
+    package
+    timestamp
+
+Then adding a receiver action in manifest becomes useful to HTML without a custom method.
+
+7. Generic content/file URI path
+
+ContentResolver should be reachable as a root and have binary-safe primitives:
+
+    openInputStream(uri)
+    openOutputStream(uri)
+    query(uri,...)
+
+This supports document providers, media, downloads, shared files, etc.
+
+8. Generic resource registry
+
+Every opened service/path/session becomes a resource:
+
+    permission:CAMERA
+    service:accessibility
+    service:notificationListener
+    system:usb
+    system:sensor
+    activityResult:mediaProjection
+    page:main
+    process:sh1
+    frame:vision
+
+Same lifecycle:
+
+    info/read/write/events/close
+
+What still needs native adapters
+--------------------------------
+
+Manifest-first does not mean Kotlin never changes.
+Some Android powers need native lifecycle/callback classes that HTML cannot create
+from pure JS easily.
+
+These deserve generic adapters, not product-specific wrappers:
+
+1. AccessibilityService adapter
+   Needed for gestures, screen tree/events, overlay windows, key kill switch.
+
+2. NotificationListenerService adapter
+   Needed for notification events.
+
+3. MediaProjection adapter
+   Needed for screen capture and frame pipes.
+
+4. Foreground Service adapter
+   Needed for long-running operation.
+
+5. Generic BroadcastReceiver adapter
+   Needed for intent/broadcast events.
+
+6. USB adapter
+   Needed for permission/open/bulk endpoints if Bugjaeger-like HTML is desired.
+
+7. Runtime permission adapter
+   Needed because requestPermissions returns asynchronously.
+
+But once these generic adapters exist, adding a new use case should mostly be
+manifest/config/HTML, not new Kotlin feature methods.
+
+Desired caps() shape
+--------------------
+
+caps should become a manifest/capability graph, not only booleans.
+
+Example:
+
+{
+  "package": "a.htmlapprealizer",
+  "permissions": {
+    "android.permission.CAMERA": {"declared":true,"granted":true,"requestable":true},
+    "android.permission.BODY_SENSORS": {"declared":true,"granted":false,"requestable":true},
+    "android.permission.PACKAGE_USAGE_STATS": {"declared":true,"granted":false,"fix":{"settings":"android.settings.USAGE_ACCESS_SETTINGS"}}
+  },
+  "services": {
+    "accessibility": {"declared":true,"enabled":false,"fix":{"settings":"android.settings.ACCESSIBILITY_SETTINGS"}},
+    "notificationListener": {"declared":true,"enabled":false,"fix":{"settings":"android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"}}
+  },
+  "roots": ["activity","application","package","content","sensor","usb","window","notification","mediaProjection"],
+  "routes": {
+    "screen": ["accessibilityTree","accessibilityScreenshot","mediaProjectionFramePipe","adbScreencap?","rootScreencap?"],
+    "input": ["accessibilityGesture","adbInput?","rootInput?"],
+    "compute": ["pageJS","wasm/html-test","webgpu/html-test","process","dex","nativeLib"]
+  }
+}
+
+This lets HTML choose routes instead of Kotlin deciding.
+
+Generic op target model
+-----------------------
+
+Manifest-first works best with addressable targets:
+
+    cap:android.permission.CAMERA
+    service:accessibility
+    service:notificationListener
+    system:usb
+    system:sensor
+    system:mediaProjection
+    content:content://...
+    intent:android.settings.ACCESSIBILITY_SETTINGS
+    page:main
+    process:sh1
+    frame:vision
+    input:auto
+    handle:42
+
+Uniform verbs:
+
+    get/read/open/write/call/close/set
+
+Examples:
+
+    {"op":"read", "target":"cap:*"}
+    {"op":"open", "target":"intent:android.settings.ACCESSIBILITY_SETTINGS"}
+    {"op":"open", "target":"system:usb"}
+    {"op":"call", "target":"handle:42", "data":{"method":"foo","args":[]}}
+    {"op":"write", "target":"input:auto", "data":{"gesture":[...]}}
+
+Adding a manifest permission then affects caps/root availability, not public API shape.
+
+Design smell checklist
+----------------------
+
+Bad signs:
+
+    adding a new permission requires a new mirror.somePermissionFeature() method
+    adding a new service requires a separate event queue
+    adding a new data source requires a separate callback convention
+    adding a new backend requires rewriting HTML actions
+    adding a new capability requires editing many switch statements
+
+Good signs:
+
+    new permission appears automatically in caps
+    new service emits into same event bus
+    new long-running thing appears in resources
+    new data source uses pipe/file pattern
+    new backend implements same input/action interface
+    HTML can discover and choose it
+
+Practical next code steps
+-------------------------
+
+1. Add manifest/capability introspection to caps().
+2. Add generic root(name) system-service getter.
+3. Add generic permissionRequest(permissionsJson, cbId).
+4. Add resource registry for pages/processes/framePipes/sensors/projection.
+5. Add event bus IDs/cursors and route all service callbacks there.
+6. Add generic op dispatcher with op+target+data.
+7. Keep old direct helpers as wrappers while the op system matures.
+
+This would move mirror closer to the desired state where manifest + HTML is often
+enough, and Kotlin only needs new code when a genuinely new Android adapter/lifecycle
+is required.

@@ -1,0 +1,16 @@
+App Realizer snapshot numbering
+===============================
+
+/1  Original/live snapshot. Keep unchanged.
+/2  Preserved proposal state from when /2 was introduced for code suggestions. Keep frozen unless explicitly requested.
+/3  Milestone saved from /0 when testable mirror overlay HTML existed; includes test_html/ with that HTML.
+/4  Manifest-first/resource-introspection milestone copied from /0 and enhanced with generic resources/caps/roots/permission/stop paths.
+/0  Always-latest continuous working state. Future iterative edits should happen here first unless user asks for a milestone.
+/5+ Future milestones only when explicitly declared by the user (copy /0 or requested state to that number at that time).
+
+Current rule:
+- Do not mutate /1.
+- Do not mutate /2.
+- Do not mutate /3.
+- Treat /4 as a milestone for manifest-first/fractal kernel work.
+- Use /0 for ongoing latest work unless the user asks to work in a milestone.

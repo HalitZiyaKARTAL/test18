@@ -1,0 +1,18 @@
+App Realizer /4 milestone
+=========================
+
+This milestone was created to start moving /0 toward the manifest-first/fractal kernel design.
+
+Focus:
+- resource introspection
+- manifest/capability introspection
+- generic root handles
+- generic permission request path
+- generic stop/cleanup targets
+- exec integration for resources/manifest/require/stop
+
+/1 original unchanged.
+/2 earlier preserved proposal.
+/3 milestone with testable mirror overlay HTML.
+/0 remains continuous latest working state.
+/4 is this deeper manifest/resource-kernel milestone.

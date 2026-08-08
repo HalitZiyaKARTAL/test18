@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">HTML Realizer J</string>
+    <string name="accessibility_description">Lets user-authored HTML inspect accessibility trees and perform explicitly enabled actions.</string>
+</resources>

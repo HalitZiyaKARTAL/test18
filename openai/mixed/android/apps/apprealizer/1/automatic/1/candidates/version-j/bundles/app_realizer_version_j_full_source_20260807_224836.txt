@@ -1,0 +1,3394 @@
+APP REALIZER VERSION J — FULL BUILDABLE SOURCE
+Candidate date: 2026-08-07
+Toolchain: Android Gradle Plugin 8.13.2; Kotlin 2.2.21; compile/target SDK 36; min SDK 30; Java 17.
+Each file follows between exact BEGIN/END boundary lines. local.properties is intentionally omitted because it is machine-specific.
+
+===== BEGIN FILE: settings.gradle.kts =====
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "AppRealizerVersionJ"
+include(":app")
+===== END FILE: settings.gradle.kts =====
+
+===== BEGIN FILE: build.gradle.kts =====
+plugins {
+    id("com.android.application") version "8.13.2" apply false
+    id("org.jetbrains.kotlin.android") version "2.2.21" apply false
+}
+===== END FILE: build.gradle.kts =====
+
+===== BEGIN FILE: gradle.properties =====
+org.gradle.jvmargs=-Xmx3072m -Dfile.encoding=UTF-8
+android.useAndroidX=false
+kotlin.code.style=official
+includeKotlinReflect=true
+===== END FILE: gradle.properties =====
+
+===== BEGIN FILE: app/build.gradle.kts =====
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
+
+val includeKotlinReflect = providers.gradleProperty("includeKotlinReflect")
+    .orElse("true")
+    .map(String::toBoolean)
+
+android {
+    namespace = "a.htmlapprealizer"
+    compileSdk = 36
+    buildToolsVersion = "36.0.0"
+
+    defaultConfig {
+        applicationId = "a.htmlapprealizer"
+        minSdk = 30
+        targetSdk = 36
+        versionCode = 10
+        versionName = "J-candidate-20260807"
+        testInstrumentationRunner = "android.app.Instrumentation"
+        buildConfigField("boolean", "HAS_KOTLIN_REFLECT", includeKotlinReflect.get().toString())
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+        freeCompilerArgs += "-Xannotation-default-target=param-property"
+    }
+
+    packaging {
+        resources.excludes += setOf("META-INF/LICENSE*", "META-INF/NOTICE*")
+    }
+}
+
+dependencies {
+    if (includeKotlinReflect.get()) {
+        implementation("org.jetbrains.kotlin:kotlin-reflect:2.2.21")
+    }
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.2.21")
+}
+===== END FILE: app/build.gradle.kts =====
+
+===== BEGIN FILE: app/proguard-rules.pro =====
+-keepattributes RuntimeVisibleAnnotations,RuntimeInvisibleAnnotations,AnnotationDefault,Signature,InnerClasses,EnclosingMethod
+-keep class a.htmlapprealizer.KotlinProbe { *; }
+-keep class a.htmlapprealizer.KotlinProbe$Companion { *; }
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+-if class kotlin.reflect.full.KClasses
+-keep class kotlin.reflect.** { *; }
+-dontwarn kotlin.reflect.jvm.internal.**
+===== END FILE: app/proguard-rules.pro =====
+
+===== BEGIN FILE: app/src/main/AndroidManifest.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
+
+    <application
+        android:allowBackup="true"
+        android:hardwareAccelerated="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+        android:usesCleartextTraffic="true">
+
+        <activity
+            android:name=".Main"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:resizeableActivity="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".RuntimeService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="User-authored HTML and JavaScript runtime explicitly kept active by the user." />
+        </service>
+
+        <service
+            android:name=".NotificationPortal"
+            android:exported="false"
+            android:label="HTML Realizer notification access"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".ProjectionService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+
+        <service
+            android:name=".GlobalService"
+            android:exported="true"
+            android:label="HTML Realizer accessibility"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_config" />
+        </service>
+
+        <receiver android:name=".AlarmPortal" android:exported="false" />
+    </application>
+</manifest>
+===== END FILE: app/src/main/AndroidManifest.xml =====
+
+===== BEGIN FILE: app/src/main/res/values/strings.xml =====
+<resources>
+    <string name="app_name">HTML Realizer J</string>
+    <string name="accessibility_description">Lets user-authored HTML inspect accessibility trees and perform explicitly enabled actions.</string>
+</resources>
+===== END FILE: app/src/main/res/values/strings.xml =====
+
+===== BEGIN FILE: app/src/main/res/xml/accessibility_config.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeAllMask"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault|flagReportViewIds|flagRetrieveInteractiveWindows|flagRequestFilterKeyEvents"
+    android:canPerformGestures="true"
+    android:canRequestFilterKeyEvents="true"
+    android:canRetrieveWindowContent="true"
+    android:canTakeScreenshot="true"
+    android:description="@string/accessibility_description"
+    android:notificationTimeout="50"
+    android:settingsActivity="a.htmlapprealizer.Main" />
+===== END FILE: app/src/main/res/xml/accessibility_config.xml =====
+
+===== BEGIN FILE: app/src/main/res/drawable/ic_launcher.xml =====
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#111111"
+        android:pathData="M0,0h48v48h-48z" />
+    <path
+        android:fillColor="#005588"
+        android:pathData="M6,7h36v34h-36z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M11,13h26v4h-26zM11,22h17v4h-17zM11,31h26v4h-26z" />
+</vector>
+===== END FILE: app/src/main/res/drawable/ic_launcher.xml =====
+
+===== BEGIN FILE: app/src/main/java/a/htmlapprealizer/Bridge.kt =====
+package a.htmlapprealizer
+
+import android.webkit.JavascriptInterface
+import org.json.JSONArray
+import org.json.JSONObject
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier
+import java.util.Locale
+
+object BridgeFacade {
+    @JavascriptInterface fun epoch(): String =
+        if (Core.validateEpoch(requireAuth = false) == null) Core.currentEpoch() else ""
+
+    @JavascriptInterface fun auth(password: String): Boolean = Core.authenticate(password)
+    @JavascriptInterface fun boundary(epoch: String, stage: String): Boolean =
+        Core.documentBoundary(epoch, stage)
+
+    @JavascriptInterface fun q(
+        epoch: String,
+        target: String,
+        member: String,
+        json: String,
+        callback: Int
+    ): String = if (callback > 0) Core.async("java", target, member, json, callback)
+    else Core.executeJava(target, member, json, epoch)
+
+    @JavascriptInterface fun k(
+        epoch: String,
+        target: String,
+        member: String,
+        json: String,
+        callback: Int
+    ): String = if (callback > 0) Core.async("kotlin", target, member, json, callback)
+    else Core.executeKotlin(target, member, json, epoch)
+
+    @JavascriptInterface fun tsv(epoch: String, source: String, callback: Int): String {
+        Core.validateEpoch(epoch)?.let { return it }
+        return Core.runTsv(source, callback)
+    }
+
+    @JavascriptInterface fun listen(enabled: Boolean): Boolean = Core.setEvents(enabled)
+    @JavascriptInterface fun caps(): String =
+        if (Core.validateEpoch() == null) "V${Core.capabilities()}" else "E:SEC"
+    @JavascriptInterface fun debug(): String =
+        if (Core.validateEpoch() == null) "V${DebugLog.report()}" else "E:SEC"
+    @JavascriptInterface fun drops(): Int = if (Core.validateEpoch() == null) Core.droppedEvents() else -1
+
+    // Original K.* compatibility facade. P0 remains the current Activity (or app context).
+    @JavascriptInterface fun sz(): Int = if (Core.validateEpoch() == null) Core.heapSize() + 1 else -1
+    @JavascriptInterface fun cls() { if (Core.validateEpoch() == null) Core.clearHandles() }
+    @JavascriptInterface fun c(name: String): String = Core.javaLookup(name)
+    @JavascriptInterface fun n(className: String, json: String): String =
+        Core.executeJava(className, "", json)
+    @JavascriptInterface fun x(handle: Int, name: String, json: String): String =
+        Core.executeJava("P$handle", name, json)
+    @JavascriptInterface fun u(handle: Int, name: String, json: String, callback: Int) {
+        val status = Core.async("java", "P$handle", "!$name", json, callback, legacy = true)
+        if (!status.startsWith('W'))
+            Core.result("return", callback, status, Core.currentEpoch(), legacy = true)
+    }
+    @JavascriptInterface fun g(handle: Int, field: String): String =
+        Core.executeJava("P$handle", "#get:$field", "[]")
+    @JavascriptInterface fun s(handle: Int, field: String, value: String): String =
+        Core.executeJava("P$handle", "#set:$field", "[$value]")
+    @JavascriptInterface fun a(type: String, length: Int): String =
+        Core.executeJava(type, "#array", "[$length]")
+    @JavascriptInterface fun p(type: String, callback: Int): String =
+        legacyProxy(type, callback)
+    @JavascriptInterface fun del(handle: Int) {
+        if (Core.validateEpoch() == null && handle > 0) Core.drop("P$handle")
+    }
+
+    private fun legacyProxy(typeName: String, callback: Int): String {
+        Core.validateEpoch()?.let { return it }
+        val type = runCatching { Class.forName(typeName, false, javaClass.classLoader) }
+            .getOrElse { return "E:CLASS" }
+        if (!type.isInterface) return "E:TYPE"
+        val request = BridgeRequest(
+            "java", "proxy", type.name, "legacy:$callback", "java:proxy:${type.name}"
+        )
+        if (!Core.authorized(request)) return "E:POLICY"
+        val born = Core.currentEpoch()
+        val proxy = java.lang.reflect.Proxy.newProxyInstance(type.classLoader, arrayOf(type)) { proxyObject, method, values ->
+            if (method.declaringClass == Any::class.java) return@newProxyInstance when (method.name) {
+                "toString" -> "LegacyBridgeProxy($callback)"
+                "hashCode" -> System.identityHashCode(proxyObject)
+                "equals" -> proxyObject === values?.firstOrNull()
+                else -> null
+            }
+            Core.legacyProxy(callback, method.name, values, born)
+            if (!method.returnType.isPrimitive || method.returnType == Void.TYPE) null
+            else java.lang.reflect.Array.get(java.lang.reflect.Array.newInstance(method.returnType, 1), 0)
+        }
+        return Core.keep(proxy, born)
+    }
+
+    @JavascriptInterface fun cap(name: String): String {
+        Core.validateEpoch()?.let { return it }
+        val value = Core.portValue(name) ?: return "E:PORT"
+        val request = BridgeRequest("portal", "port", value.javaClass.name, name, "portal:$name")
+        return if (Core.authorized(request)) Core.keep(value) else "E:POLICY"
+    }
+
+    @JavascriptInterface fun manifest(): String = CapabilityFacade.manifest()
+    @JavascriptInterface fun resources(): String = CapabilityFacade.resources()
+    @JavascriptInterface fun root(): String = CapabilityFacade.root()
+    @JavascriptInterface fun permission(permission: String, requestCode: Int): String =
+        CapabilityFacade.requestPermission(permission, requestCode)
+    @JavascriptInterface fun stop(portal: String): String = CapabilityFacade.stop(portal)
+    @JavascriptInterface fun overlay(html: String, mode: String, configuration: String): String =
+        CapabilityFacade.overlay(html, mode, configuration)
+    @JavascriptInterface fun overlayEval(script: String): String = CapabilityFacade.overlayEval(script)
+    @JavascriptInterface fun overlayClose(): String = CapabilityFacade.overlayClose()
+    @JavascriptInterface fun vibe(durationMs: Long): String = CapabilityFacade.vibrate(durationMs)
+    @JavascriptInterface fun notify(id: Int, title: String, text: String): String =
+        CapabilityFacade.notify(id, title, text)
+    @JavascriptInterface fun alarm(
+        delayMs: Long, title: String, text: String, exact: Boolean
+    ): String = CapabilityFacade.alarm(delayMs, title, text, exact)
+}
+
+object KotlinDynamic {
+    private data class KotlinMatch(
+        val callable: Any,
+        val arguments: Map<Any, Any?>,
+        val score: Int,
+        val signature: String
+    )
+
+    fun execute(target: String, memberRaw: String, json: String, born: String): String {
+        if (!BuildConfig.HAS_KOTLIN_REFLECT) return "E:KOTLIN_DEP"
+        val resolved = Core.resolveReflectionTarget(target) ?: return "E:HANDLE"
+        return try {
+            val kClass = kotlinClass(resolved.type)
+            when {
+                memberRaw == "+" -> Core.retain(target)
+                memberRaw == "-" -> if (Core.drop(target)) "V" else "E:HANDLE"
+                memberRaw == "@object" -> objectValue(kClass, resolved.type, born)
+                memberRaw == "@companion" -> companionValue(kClass, resolved.type, born)
+                memberRaw.startsWith("get:") -> propertyGet(
+                    kClass, resolved, memberRaw.removePrefix("get:"), born
+                )
+                memberRaw.startsWith("set:") -> propertySet(
+                    kClass, resolved, memberRaw.removePrefix("set:"), json, born
+                )
+                else -> callable(kClass, resolved, memberRaw, json, born)
+            }
+        } catch (error: ClassNotFoundException) {
+            DebugLog.add("KOTLIN", "kotlin-reflect classes absent", error)
+            "E:KOTLIN_DEP"
+        } catch (error: Throwable) {
+            Core.bridgeFailure(if (error is InvocationTargetException) error.targetException else error)
+        }
+    }
+
+    private fun kotlinClass(type: Class<*>): Any {
+        val mapping = Class.forName("kotlin.jvm.JvmClassMappingKt")
+        val method = mapping.methods.first {
+            it.name == "getKotlinClass" && it.parameterCount == 1 && Modifier.isStatic(it.modifiers)
+        }
+        return method.invoke(null, type) ?: error("KClass mapping returned null")
+    }
+
+    private fun call0(value: Any, name: String): Any? =
+        value.javaClass.methods.first { it.name == name && it.parameterCount == 0 }.invoke(value)
+
+    private fun callBy(callable: Any, arguments: Map<Any, Any?>): Any? =
+        callable.javaClass.methods.first { it.name == "callBy" && it.parameterCount == 1 }
+            .invoke(callable, arguments)
+
+    private fun callableName(value: Any): String = call0(value, "getName")?.toString().orEmpty()
+    private fun signature(value: Any): String = "kotlin:${value}"
+
+    private fun members(kClass: Any): Collection<Any> =
+        (call0(kClass, "getMembers") as? Collection<*>)?.filterNotNull().orEmpty()
+
+    private fun constructors(kClass: Any): Collection<Any> =
+        (call0(kClass, "getConstructors") as? Collection<*>)?.filterNotNull().orEmpty()
+
+    private fun isProperty(value: Any): Boolean =
+        value.javaClass.methods.any { it.name == "getGetter" && it.parameterCount == 0 }
+
+    private fun request(
+        operation: String,
+        type: Class<*>,
+        member: String,
+        callable: Any
+    ) = BridgeRequest("kotlin", operation, type.name, member, signature(callable))
+
+    private fun objectValue(kClass: Any, type: Class<*>, born: String): String {
+        val policy = BridgeRequest("kotlin", "object", type.name, "object", "kotlin:object:${type.name}")
+        if (!Core.authorized(policy)) return "E:POLICY"
+        return call0(kClass, "getObjectInstance")?.let { Core.keep(it, born) } ?: "E:NOT_OBJECT"
+    }
+
+    private fun companionValue(kClass: Any, type: Class<*>, born: String): String {
+        val nested = (call0(kClass, "getNestedClasses") as? Collection<*>)?.filterNotNull().orEmpty()
+        val companion = nested.firstOrNull { call0(it, "getSimpleName") == "Companion" }
+            ?: return "E:NO_COMPANION"
+        val policy = BridgeRequest(
+            "kotlin", "companion", type.name, "Companion", "kotlin:companion:${type.name}"
+        )
+        if (!Core.authorized(policy)) return "E:POLICY"
+        return call0(companion, "getObjectInstance")?.let { Core.keep(it, born) } ?: "E:NO_COMPANION"
+    }
+
+    private fun propertyGet(
+        kClass: Any,
+        target: Core.ReflectionTarget,
+        name: String,
+        born: String
+    ): String {
+        val property = members(kClass).firstOrNull { isProperty(it) && callableName(it) == name }
+            ?: return "E:PROPERTY"
+        if (!Core.authorized(request("property-get", target.type, name, property))) return "E:POLICY"
+        val matched = buildMatch(property, target, JSONObject(), JSONArray()) ?: return "E:SIG"
+        return Core.keep(callBy(property, matched.arguments), born)
+    }
+
+    private fun propertySet(
+        kClass: Any,
+        target: Core.ReflectionTarget,
+        name: String,
+        json: String,
+        born: String
+    ): String {
+        val property = members(kClass).firstOrNull { isProperty(it) && callableName(it) == name }
+            ?: return "E:PROPERTY"
+        val setter = runCatching { call0(property, "getSetter") }.getOrNull() ?: return "E:IMMUTABLE"
+        if (!Core.authorized(request("property-set", target.type, name, setter))) return "E:POLICY"
+        val array = JSONArray(json)
+        val matched = buildMatch(setter, target, JSONObject(), array) ?: return "E:SIG"
+        return Core.keep(callBy(setter, matched.arguments), born)
+    }
+
+    private fun callable(
+        kClass: Any,
+        target: Core.ReflectionTarget,
+        member: String,
+        json: String,
+        born: String
+    ): String {
+        val constructor = member.isBlank() || member == "<init>"
+        val candidates = if (constructor) constructors(kClass)
+        else members(kClass).filter { !isProperty(it) && callableName(it) == member }
+        val objectArguments = if (json.trimStart().startsWith('{')) JSONObject(json) else JSONObject()
+        val arrayArguments = if (json.trimStart().startsWith('{')) JSONArray() else JSONArray(json)
+        val matches = candidates.mapNotNull { candidate ->
+            buildMatch(candidate, target.takeUnless { constructor }, objectArguments, arrayArguments)
+        }.sortedWith(compareBy({ it.score }, { it.signature }))
+        val selected = matches.firstOrNull() ?: return "E:SIG"
+        val operation = if (constructor) "constructor" else "function"
+        if (!Core.authorized(request(operation, target.type, member, selected.callable))) return "E:POLICY"
+        return Core.keep(callBy(selected.callable, selected.arguments), born)
+    }
+
+    private fun buildMatch(
+        callable: Any,
+        target: Core.ReflectionTarget?,
+        named: JSONObject,
+        positional: JSONArray
+    ): KotlinMatch? = runCatching {
+        val parameters = (call0(callable, "getParameters") as? Collection<*>)?.filterNotNull().orEmpty()
+        val output = linkedMapOf<Any, Any?>()
+        var index = 0
+        var score = 0
+        for (parameter in parameters) {
+            val kind = call0(parameter, "getKind").toString()
+            if (kind == "INSTANCE") {
+                val receiver = target?.let {
+                    if (it.direct) call0(kotlinClass(it.type), "getObjectInstance") else it.receiver
+                } ?: return@runCatching null
+                output[parameter] = receiver
+                continue
+            }
+            val name = call0(parameter, "getName")?.toString()
+            val present = name != null && named.has(name)
+            if (!present && index >= positional.length()) {
+                val optional = call0(parameter, "isOptional") as? Boolean ?: false
+                if (optional) continue
+                return@runCatching null
+            }
+            val raw = if (present) named.get(name) else positional.get(index++)
+            val javaType = javaType(call0(parameter, "getType") ?: return@runCatching null)
+            val converted = Core.coerceFor(raw, javaType)
+            output[parameter] = converted.first
+            score += converted.second
+        }
+        if (index != positional.length()) return@runCatching null
+        KotlinMatch(callable, output, score, signature(callable))
+    }.getOrNull()
+
+    private fun javaType(kType: Any): Class<*> {
+        val classifier = call0(kType, "getClassifier") ?: return Any::class.java
+        val mapping = Class.forName("kotlin.jvm.JvmClassMappingKt")
+        val nullable = call0(kType, "isMarkedNullable") as? Boolean ?: true
+        val methodName = if (nullable) "getJavaObjectType" else "getJavaClass"
+        val method: Method = mapping.methods.first {
+            it.name == methodName && it.parameterCount == 1 && Modifier.isStatic(it.modifiers)
+        }
+        return method.invoke(null, classifier) as Class<*>
+    }
+}
+
+object KotlinProbe {
+    var label: String = "version-j"
+    fun describe(prefix: String = "probe", repeat: Int = 2): String =
+        List(repeat.coerceIn(0, 20)) { "$prefix:$label" }.joinToString("|")
+}
+
+class KotlinSample(val base: Int = 7) {
+    val doubled: Int get() = base * 2
+    companion object {
+        fun identify(tag: String = "J"): String = "sample-$tag"
+    }
+}
+===== END FILE: app/src/main/java/a/htmlapprealizer/Bridge.kt =====
+
+===== BEGIN FILE: app/src/main/java/a/htmlapprealizer/Core.kt =====
+package a.htmlapprealizer
+
+import android.app.Activity
+import android.content.Context
+import android.content.MutableContextWrapper
+import android.graphics.Bitmap
+import android.net.Uri
+import android.os.Handler
+import android.os.Looper
+import android.view.ViewGroup
+import android.webkit.RenderProcessGoneDetail
+import android.webkit.ServiceWorkerClient
+import android.webkit.ServiceWorkerController
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import org.json.JSONArray
+import org.json.JSONObject
+import java.lang.reflect.Constructor
+import java.lang.reflect.Executable
+import java.lang.reflect.Field
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier
+import java.lang.reflect.Proxy
+import java.net.IDN
+import java.util.ArrayDeque
+import java.util.Locale
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
+import java.util.concurrent.FutureTask
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
+
+object HostPolicy {
+    private val localSchemes = setOf("about", "blob", "content", "data", "file")
+    private const val LOCAL_HOST = "html.realizer.local"
+
+    fun normalizeHost(raw: String): String? = runCatching {
+        val trimmed = raw.trim().lowercase(Locale.ROOT)
+        val host = if ("://" in trimmed) Uri.parse(trimmed).host.orEmpty() else trimmed
+        IDN.toASCII(host.trim().trimEnd('.')).lowercase(Locale.ROOT)
+            .takeIf { it.isNotBlank() && !it.contains('/') && !it.contains('@') }
+    }.getOrNull()
+
+    fun isAllowed(uri: Uri?, store: PolicyStore?): Boolean {
+        if (store?.cutHtmlInternet != true) return true
+        val scheme = uri?.scheme?.lowercase(Locale.ROOT)
+        if (scheme in localSchemes) return true
+        val host = normalizeHost(uri?.host.orEmpty()) ?: return false
+        if (host == LOCAL_HOST) return true
+        return synchronized(store) {
+            store.domainExceptions.any { exception ->
+                host == exception || host.endsWith(".$exception")
+            }
+        }
+    }
+
+    fun blocked(): WebResourceResponse = WebResourceResponse(
+        "text/plain", "utf-8", 403, "Blocked by Cut HTML Internet",
+        mapOf("Cache-Control" to "no-store"), null
+    )
+}
+
+object Core {
+    internal data class ReflectionTarget(val receiver: Any, val type: Class<*>, val direct: Boolean)
+    private data class Held(val value: Any, val epoch: String)
+    private data class Delivery(
+        val type: String,
+        val id: Int,
+        val token: String,
+        val epoch: String,
+        val urgent: Boolean,
+        val legacy: Boolean,
+        val autoRelease: Boolean
+    )
+    private data class Match(val values: Array<Any?>, val score: Int)
+    private object Missing
+
+    private const val HEAP_LIMIT = 4096
+    private const val NORMAL_QUEUE_LIMIT = 1024
+    private const val URGENT_QUEUE_LIMIT = 256
+    private const val DELIVERY_TIMEOUT_MS = 30_000L
+
+    private val main = Handler(Looper.getMainLooper())
+    private val workers = Executors.newFixedThreadPool(4) { runnable ->
+        Thread(runnable, "html-realizer-bridge").apply { isDaemon = true }
+    }
+    private val heap = ConcurrentHashMap<Long, Held>()
+    private val nextHandle = AtomicLong(1)
+    private val ports = ConcurrentHashMap<String, Any>()
+    private val waits = ConcurrentHashMap<String, String>()
+    private val dropped = AtomicInteger()
+    private val pendingNormal = AtomicInteger()
+    private val pendingUrgent = AtomicInteger()
+    private val normal = ArrayDeque<Delivery>()
+    private val urgent = ArrayDeque<Delivery>()
+    private val ownerVersion = AtomicInteger()
+    private var active: Delivery? = null
+    private var deliverySerial = 0L
+    private var expiry: Runnable? = null
+
+    private lateinit var app: Context
+    private lateinit var wrapper: MutableContextWrapper
+    private lateinit var policy: PolicyStore
+    private val bridge = BridgeFacade
+    @Volatile private var epoch = ""
+    @Volatile private var authenticated = false
+    @Volatile private var ready = false
+    @Volatile private var eventsEnabled = false
+    @Volatile private var documentUrl = ""
+    @Volatile private var documentBoundaryToken = ""
+    @Volatile var web: WebView? = null
+        private set
+
+    @Synchronized fun ensure(context: Context): WebView {
+        web?.let { return it }
+        app = context.applicationContext
+        policy = PolicyStore.get(app)
+        wrapper = MutableContextWrapper(app)
+        val created = WebView(wrapper)
+        web = created
+        created.settings.javaScriptEnabled = true
+        created.settings.domStorageEnabled = true
+        created.settings.allowFileAccess = true
+        created.settings.allowContentAccess = true
+        created.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false)
+        created.addJavascriptInterface(bridge, "K")
+        created.addJavascriptInterface(bridge, "mirror")
+        created.webChromeClient = BrowserPortal
+        created.webViewClient = runtimeClient()
+        runCatching {
+            ServiceWorkerController.getInstance().setServiceWorkerClient(object : ServiceWorkerClient() {
+                override fun shouldInterceptRequest(request: WebResourceRequest): WebResourceResponse? =
+                    if (HostPolicy.isAllowed(request.url, policyOrNull())) null else HostPolicy.blocked()
+            })
+        }.onFailure { DebugLog.add("NET", "ServiceWorkerClient unavailable", it) }
+        port("core", this)
+        port("app", app)
+        port("main", main)
+        port("web", created)
+        port("bridge", bridge)
+        loadDefaultEditor()
+        return created
+    }
+
+    private fun runtimeClient() = object : WebViewClient() {
+        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+            ready = false
+            documentBoundaryToken = ""
+            documentUrl = url.orEmpty()
+            revoke("document-start", createReplacement = false)
+        }
+
+        override fun onPageFinished(view: WebView?, url: String?) {
+            documentUrl = url.orEmpty()
+            ready = true
+            createEpoch("document-finished")
+            injectDocumentBoundaryHooks()
+        }
+
+        override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean =
+            !HostPolicy.isAllowed(request?.url, policyOrNull())
+
+        @Deprecated("Compatibility callback")
+        override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean =
+            !HostPolicy.isAllowed(url?.let(Uri::parse), policyOrNull())
+
+        override fun shouldInterceptRequest(
+            view: WebView?, request: WebResourceRequest?
+        ): WebResourceResponse? = if (HostPolicy.isAllowed(request?.url, policyOrNull())) null
+        else HostPolicy.blocked()
+
+        override fun onRenderProcessGone(view: WebView?, detail: RenderProcessGoneDetail?): Boolean {
+            if (view != null) recoverRenderer(view, detail)
+            return true
+        }
+    }
+
+    @Synchronized private fun recoverRenderer(dead: WebView, detail: RenderProcessGoneDetail?) {
+        if (web !== dead) return
+        DebugLog.add("WEB", "renderer gone; crashed=${detail?.didCrash()}")
+        revoke("renderer-gone", createReplacement = false)
+        (dead.parent as? ViewGroup)?.removeView(dead)
+        ports.remove("web", dead)
+        web = null
+        runCatching { dead.destroy() }
+        val activity = currentActivity()
+        val fresh = ensure(activity ?: app)
+        activity?.mount(fresh)
+    }
+
+    fun attach(activity: Main): WebView {
+        val view = ensure(activity)
+        (view.parent as? ViewGroup)?.removeView(view)
+        wrapper.setBaseContext(activity)
+        port("activity", activity)
+        return view
+    }
+
+    fun detach(activity: Main, changingConfiguration: Boolean) {
+        if (ports["activity"] !== activity) return
+        web?.let { (it.parent as? ViewGroup)?.removeView(it) }
+        wrapper.setBaseContext(app)
+        port("activity", activity, live = false, deferOwnerCheck = changingConfiguration)
+    }
+
+    @Synchronized fun port(
+        name: String,
+        value: Any,
+        live: Boolean = true,
+        deferOwnerCheck: Boolean = false
+    ): Boolean {
+        val changed: Boolean
+        val retired: Any?
+        if (live) {
+            retired = ports.put(name, value)
+            changed = retired !== value
+        } else {
+            changed = ports.remove(name, value)
+            retired = if (changed) value else null
+        }
+        if (!changed) return false
+        event("port.${if (live) "ready" else "closed"}", 0, name)
+        if (retired != null && ports.values.none { it === retired }) releaseValuesMatching(retired)
+        if (name == "activity" || name == "runtime") ownerCheck(if (deferOwnerCheck) 1000 else 0)
+        currentActivity()?.refreshNativeState()
+        return true
+    }
+
+    private fun ownerCheck(delay: Long) {
+        val version = ownerVersion.incrementAndGet()
+        main.postDelayed({
+            if (version == ownerVersion.get() && ports["activity"] == null && ports["runtime"] == null)
+                revoke("no-live-owner", createReplacement = false)
+        }, delay)
+    }
+
+    fun currentActivity(): Main? = ports["activity"] as? Main
+    fun policyOrNull(): PolicyStore? = if (::policy.isInitialized) policy else null
+    fun currentEpoch(): String = epoch
+    fun isAuthenticated(): Boolean = authenticated && epoch.isNotEmpty()
+    fun isTrusted(): Boolean = epoch.isNotEmpty() && policyOrNull()?.bridgeEnabled == true
+    fun eventsActive(): Boolean = eventsEnabled && isTrusted()
+    fun heapSize(): Int = heap.size
+    fun droppedEvents(): Int = dropped.get()
+    fun documentLabel(): String = when {
+        documentUrl.startsWith("data:") -> "DATA"
+        documentUrl.startsWith("file:") -> "FILE"
+        documentUrl.startsWith("about:") -> "LOCAL"
+        else -> documentUrl.substringAfter("://", documentUrl.substringBefore(':'))
+            .substringBefore('/').take(18).ifBlank { "PAGE" }
+    }
+
+    @Synchronized private fun createEpoch(reason: String) {
+        val store = policyOrNull() ?: return
+        epoch = if (ready && store.bridgeEnabled) UUID.randomUUID().toString() else ""
+        authenticated = epoch.isNotEmpty() && store.password.isEmpty()
+        eventsEnabled = false
+        if (epoch.isNotEmpty()) {
+            val script = "window.KC=${JSONObject.quote(epoch)};window.dispatchEvent(new CustomEvent('realizer-epoch',{detail:window.KC}))"
+            web?.evaluateJavascript(script, null)
+        }
+        DebugLog.add("EPOCH", "$reason ${if (epoch.isEmpty()) "closed" else "opened"}")
+        currentActivity()?.refreshNativeState()
+    }
+
+    fun revoke(reason: String, createReplacement: Boolean = true) {
+        synchronized(this) {
+            epoch = ""
+            authenticated = false
+            eventsEnabled = false
+            waits.clear()
+            clearDeliveries()
+            clearHandles()
+            dropped.set(0)
+        }
+        GlobalService.instance?.closeOverlay("epoch-revoked")
+        DebugLog.add("EPOCH", "revoked: $reason")
+        if (createReplacement && ready && policyOrNull()?.bridgeEnabled == true)
+            synchronized(this) { createEpoch(reason) }
+        else currentActivity()?.refreshNativeState()
+    }
+
+    fun authenticate(candidate: String): Boolean {
+        if (!masterOpen()) return false
+        authenticated = candidate == policy.password
+        DebugLog.add("AUTH", if (authenticated) "accepted" else "rejected")
+        currentActivity()?.refreshNativeState()
+        return authenticated
+    }
+
+    private fun masterOpen(): Boolean =
+        ready && epoch.isNotEmpty() && policyOrNull()?.bridgeEnabled == true
+
+    fun validateEpoch(candidate: String? = null, requireAuth: Boolean = true): String? {
+        if (!masterOpen()) return "E:SEC"
+        if (candidate != null && candidate != epoch) return "E:STALE"
+        if (requireAuth && !isAuthenticated()) return "E:AUTH"
+        return null
+    }
+
+    fun setEvents(enabled: Boolean): Boolean {
+        if (validateEpoch() != null) return false
+        eventsEnabled = enabled
+        return eventsEnabled
+    }
+
+    fun capabilities(): JSONArray = JSONArray().apply { ports.keys.sorted().forEach(::put) }
+    fun portValue(name: String): Any? = ports[name]
+
+    fun loadDefaultEditor() {
+        ready = false
+        revoke("default-editor", createReplacement = false)
+        web?.loadDataWithBaseURL(DEFAULT_ORIGIN, DEFAULT_EDITOR, "text/html", "utf-8", null)
+    }
+
+    fun recreateWebView() {
+        val dead = web ?: return
+        recoverRenderer(dead, null)
+    }
+
+    fun evaluate(script: String, callback: ((String) -> Unit)? = null) {
+        main.post { web?.evaluateJavascript(script, callback) }
+    }
+
+    private fun injectDocumentBoundaryHooks() {
+        val script = """(()=>{if(Document.prototype.__realizerJ)return;const o=Document.prototype.open,w=Document.prototype.write,c=Document.prototype.close;Object.defineProperty(Document.prototype,'__realizerJ',{value:true});Document.prototype.open=function(){window.__realizerBoundaryToken=window.KC||'';try{K.boundary(window.__realizerBoundaryToken,'open')}catch(e){};return o.apply(this,arguments)};Document.prototype.write=function(){if(!window.__realizerBoundaryToken){window.__realizerBoundaryToken=window.KC||'';try{K.boundary(window.__realizerBoundaryToken,'open')}catch(e){}}return w.apply(this,arguments)};Document.prototype.close=function(){const r=c.apply(this,arguments);try{K.boundary(window.__realizerBoundaryToken||'','close')}catch(e){};window.__realizerBoundaryToken='';return r}})()"""
+        web?.evaluateJavascript(script, null)
+    }
+
+    fun documentBoundary(candidate: String, stage: String): Boolean = when (stage) {
+        "open" -> {
+            if (candidate.isEmpty() || candidate != epoch || policyOrNull()?.bridgeEnabled != true) false
+            else {
+                documentBoundaryToken = candidate
+                ready = false
+                revoke("document-open", createReplacement = false)
+                true
+            }
+        }
+        "close" -> {
+            if (candidate.isEmpty() || candidate != documentBoundaryToken || policyOrNull()?.bridgeEnabled != true)
+                false
+            else {
+                documentBoundaryToken = ""
+                ready = true
+                synchronized(this) { createEpoch("document-close") }
+                injectDocumentBoundaryHooks()
+                true
+            }
+        }
+        else -> false
+    }
+
+    private fun tokenIndex(token: String): Long? =
+        if (token.length > 1 && token[0] == 'P') token.drop(1).toLongOrNull() else null
+
+    internal fun resolveValue(raw: Any?, classes: Boolean = false): Any? {
+        if (raw === JSONObject.NULL) return null
+        if (raw !is String) return raw
+        if (raw.startsWith("PP") || raw.startsWith("@@")) return raw.drop(1)
+        val index = tokenIndex(raw)
+        if (index == 0L) return currentActivity() ?: app
+        return when {
+            index != null -> heap[index]?.takeIf { it.epoch == epoch }?.value ?: Missing
+            raw.startsWith("@") -> ports[raw.drop(1)] ?: Missing
+            classes -> Class.forName(raw, false, app.classLoader)
+            else -> raw
+        }
+    }
+
+    private fun copyLease(value: Any?): Any? = when (value) {
+        is android.view.accessibility.AccessibilityEvent ->
+            android.view.accessibility.AccessibilityEvent.obtain(value)
+        is android.view.KeyEvent -> android.view.KeyEvent(value)
+        is android.view.MotionEvent -> android.view.MotionEvent.obtain(value)
+        else -> value
+    }
+
+    private fun release(value: Any?) {
+        when (value) {
+            is android.view.accessibility.AccessibilityEvent -> runCatching { value.recycle() }
+            is android.view.accessibility.AccessibilityNodeInfo -> runCatching { value.recycle() }
+            is android.view.MotionEvent -> runCatching { value.recycle() }
+            is EpochCleanup -> value.close()
+            is AutoCloseable -> runCatching { value.close() }
+        }
+    }
+
+    private fun releaseValuesMatching(value: Any) {
+        heap.entries.forEach { entry ->
+            if (entry.value.value === value) heap.remove(entry.key, entry.value)
+        }
+        releaseIfUnreferenced(value)
+    }
+
+    @Synchronized internal fun keep(value: Any?, born: String = epoch): String {
+        return when (value) {
+            null, is Unit -> "V"
+            is Boolean, is Byte, is Short, is Int, is Long, is Float, is Double, is Char, is String -> "V$value"
+            else -> {
+                if (born.isEmpty() || born != epoch) return "E:STALE"
+                if (heap.size >= HEAP_LIMIT) return "E:HEAP"
+                val id = nextHandle.getAndIncrement()
+                heap[id] = Held(value, born)
+                "P$id"
+            }
+        }
+    }
+
+    fun retain(token: String): String {
+        val value = resolveValue(token)
+        return if (value === Missing) "E:HANDLE" else keep(copyLease(value))
+    }
+
+    @Synchronized fun drop(token: String): Boolean {
+        val index = tokenIndex(token) ?: return false
+        if (index == 0L) return false
+        val held = heap.remove(index) ?: return false
+        releaseIfUnreferenced(held.value)
+        return true
+    }
+
+    @Synchronized fun clearHandles() {
+        val values = heap.values.map { it.value }
+        heap.clear()
+        val seen = java.util.IdentityHashMap<Any, Boolean>()
+        values.forEach { value -> if (seen.put(value, true) == null) releaseIfUnreferenced(value) }
+    }
+
+    private fun releaseIfUnreferenced(value: Any) {
+        if (heap.values.any { it.value === value } || ports.values.any { it === value }) return
+        release(value)
+    }
+
+    private fun lease(value: Any?, born: String): String = keep(copyLease(value), born)
+
+    fun event(type: String, id: Int = 0, value: Any? = null): Boolean {
+        val born = epoch
+        if (!eventsEnabled || born.isEmpty()) return false
+        return queue(type, id, lease(value, born), born, urgentDelivery = false, legacy = false, autoRelease = true)
+    }
+
+    fun portal(type: String, value: Any?): Boolean {
+        val born = epoch
+        if (!eventsEnabled || born.isEmpty()) return false
+        return queue(type, 0, lease(value, born), born, urgentDelivery = true, legacy = false, autoRelease = true)
+    }
+
+    fun result(type: String, id: Int, value: Any?, born: String = epoch, legacy: Boolean = false) {
+        if (born.isEmpty() || born != epoch) return
+        queue(type, id, keep(value, born), born, urgentDelivery = true, legacy = legacy, autoRelease = false)
+    }
+
+    private fun queue(
+        type: String,
+        id: Int,
+        token: String,
+        born: String,
+        urgentDelivery: Boolean,
+        legacy: Boolean,
+        autoRelease: Boolean
+    ): Boolean {
+        if (token.startsWith("E:") && type != "return") return false
+        val pending = if (urgentDelivery) pendingUrgent else pendingNormal
+        val limit = if (urgentDelivery) URGENT_QUEUE_LIMIT else NORMAL_QUEUE_LIMIT
+        if (pending.incrementAndGet() > limit) {
+            pending.decrementAndGet()
+            dropped.incrementAndGet()
+            if (autoRelease) drop(token)
+            return false
+        }
+        val delivery = Delivery(type, id, token, born, urgentDelivery, legacy, autoRelease)
+        if (!main.post { enqueue(delivery) }) {
+            discard(delivery)
+            return false
+        }
+        return true
+    }
+
+    @Synchronized private fun enqueue(delivery: Delivery) {
+        if (delivery.epoch != epoch || !ready || web == null) {
+            discard(delivery)
+            return
+        }
+        (if (delivery.urgent) urgent else normal).addLast(delivery)
+        pump()
+    }
+
+    @Synchronized private fun pump() {
+        if (active != null) return
+        while (true) {
+            val delivery = when {
+                urgent.isNotEmpty() -> urgent.removeFirst()
+                normal.isNotEmpty() -> normal.removeFirst()
+                else -> return
+            }
+            if (delivery.epoch != epoch || !ready || web == null) {
+                discard(delivery)
+                continue
+            }
+            active = delivery
+            val serial = ++deliverySerial
+            val timeout = Runnable { finish(serial, delivered = false) }
+            expiry = timeout
+            main.postDelayed(timeout, DELIVERY_TIMEOUT_MS)
+            val quotedType = JSONObject.quote(delivery.type)
+            val quotedToken = JSONObject.quote(delivery.token)
+            val script = if (delivery.legacy)
+                "window.onC&&window.onC(${delivery.id},$quotedToken)"
+            else "window.onK&&window.onK($quotedType,${delivery.id},$quotedToken)"
+            runCatching {
+                web!!.evaluateJavascript(script) { main.post { finish(serial, delivered = true) } }
+            }.onFailure { finish(serial, delivered = false) }
+            return
+        }
+    }
+
+    @Synchronized private fun finish(serial: Long, delivered: Boolean) {
+        if (serial != deliverySerial) return
+        expiry?.let(main::removeCallbacks)
+        expiry = null
+        val delivery = active ?: return
+        active = null
+        if (!delivered || delivery.autoRelease) drop(delivery.token)
+        decrementPending(delivery)
+        pump()
+    }
+
+    @Synchronized private fun clearDeliveries() {
+        expiry?.let(main::removeCallbacks)
+        expiry = null
+        active?.let(::discard)
+        active = null
+        urgent.forEach(::discard)
+        normal.forEach(::discard)
+        urgent.clear()
+        normal.clear()
+        deliverySerial++
+    }
+
+    private fun discard(delivery: Delivery) {
+        drop(delivery.token)
+        decrementPending(delivery)
+    }
+
+    private fun decrementPending(delivery: Delivery) {
+        (if (delivery.urgent) pendingUrgent else pendingNormal).decrementAndGet()
+    }
+
+    private fun boxed(type: Class<*>): Class<*> = when (type) {
+        java.lang.Byte.TYPE -> Byte::class.javaObjectType
+        java.lang.Short.TYPE -> Short::class.javaObjectType
+        Integer.TYPE -> Int::class.javaObjectType
+        java.lang.Long.TYPE -> Long::class.javaObjectType
+        java.lang.Float.TYPE -> Float::class.javaObjectType
+        java.lang.Double.TYPE -> Double::class.javaObjectType
+        java.lang.Boolean.TYPE -> Boolean::class.javaObjectType
+        java.lang.Character.TYPE -> Char::class.javaObjectType
+        else -> type
+    }
+
+    private fun numberRank(type: Class<*>): Int = when (boxed(type)) {
+        Byte::class.javaObjectType -> 0
+        Short::class.javaObjectType -> 1
+        Int::class.javaObjectType -> 2
+        Long::class.javaObjectType -> 3
+        Float::class.javaObjectType -> 4
+        Double::class.javaObjectType -> 5
+        else -> -1
+    }
+
+    internal fun coerceFor(raw: Any?, type: Class<*>): Pair<Any?, Int> {
+        val value = resolveValue(raw)
+        if (value === Missing) throw IllegalArgumentException("missing handle or port")
+        if (value == null) {
+            if (type.isPrimitive) throw IllegalArgumentException("null for primitive ${type.name}")
+            return null to 7
+        }
+        val target = boxed(type)
+        if (target == value.javaClass) return value to 0
+        if (target.isInstance(value)) return value to 1
+        if (value is Number && numberRank(target) >= 0) {
+            val converted: Any = when (target) {
+                Byte::class.javaObjectType -> value.toByte()
+                Short::class.javaObjectType -> value.toShort()
+                Int::class.javaObjectType -> value.toInt()
+                Long::class.javaObjectType -> value.toLong()
+                Float::class.javaObjectType -> value.toFloat()
+                else -> value.toDouble()
+            }
+            val sourceRank = numberRank(value.javaClass)
+            val targetRank = numberRank(target)
+            val distance = if (sourceRank < 0) 4 else if (targetRank >= sourceRank)
+                targetRank - sourceRank else 5 + sourceRank - targetRank
+            return converted to 2 + distance
+        }
+        if (target == Boolean::class.javaObjectType && value is String) return when (value.lowercase()) {
+            "true" -> true to 6
+            "false" -> false to 6
+            else -> throw IllegalArgumentException("not a boolean")
+        }
+        if (target == Char::class.javaObjectType) return when (value) {
+            is Number -> value.toInt().toChar() to 7
+            is String -> value.singleOrNull()?.let { it to 6 }
+                ?: throw IllegalArgumentException("not one character")
+            else -> throw IllegalArgumentException("not a character")
+        }
+        if (type.isEnum && value is String) {
+            val constant = type.enumConstants?.firstOrNull {
+                (it as Enum<*>).name.equals(value, ignoreCase = false)
+            } ?: throw IllegalArgumentException("unknown enum ${type.name}.$value")
+            return constant to 6
+        }
+        if (type.isArray && value is JSONArray) {
+            val component = type.componentType ?: throw IllegalArgumentException("array has no component")
+            val array = java.lang.reflect.Array.newInstance(component, value.length())
+            var score = 8
+            for (index in 0 until value.length()) {
+                val converted = coerceFor(value.get(index), component)
+                java.lang.reflect.Array.set(array, index, converted.first)
+                score += converted.second
+            }
+            return array to score
+        }
+        throw IllegalArgumentException("${value.javaClass.name} is incompatible with ${type.name}")
+    }
+
+    private fun match(executable: Executable, args: JSONArray): Match? = runCatching {
+        val types = executable.parameterTypes
+        if (!executable.isVarArgs) {
+            if (types.size != args.length()) return@runCatching null
+            var score = 0
+            val values = Array<Any?>(types.size) { index ->
+                coerceFor(args.get(index), types[index]).also { score += it.second }.first
+            }
+            return@runCatching Match(values, score)
+        }
+        val fixed = types.size - 1
+        if (args.length() < fixed) return@runCatching null
+        var score = 0
+        val values = arrayOfNulls<Any?>(types.size)
+        for (index in 0 until fixed) {
+            val converted = coerceFor(args.get(index), types[index])
+            values[index] = converted.first
+            score += converted.second
+        }
+        if (args.length() == types.size) {
+            runCatching { coerceFor(args.get(fixed), types[fixed]) }.getOrNull()?.let {
+                values[fixed] = it.first
+                return@runCatching Match(values, score + it.second)
+            }
+        }
+        val component = types[fixed].componentType ?: return@runCatching null
+        val packed = java.lang.reflect.Array.newInstance(component, args.length() - fixed)
+        for (index in fixed until args.length()) {
+            val converted = coerceFor(args.get(index), component)
+            java.lang.reflect.Array.set(packed, index - fixed, converted.first)
+            score += converted.second
+        }
+        values[fixed] = packed
+        Match(values, score + 2)
+    }.getOrNull()
+
+    private fun request(
+        engine: String,
+        operation: String,
+        type: Class<*>,
+        member: String,
+        signature: String
+    ) = BridgeRequest(engine, operation, type.name, member, signature)
+
+    internal fun authorized(request: BridgeRequest): Boolean =
+        PolicyEngine.authorize(request) == Authorization.ALLOW
+
+    internal fun resolveReflectionTarget(target: String): ReflectionTarget? {
+        val direct = tokenIndex(target) == null && !target.startsWith("@") && !target.startsWith("PP")
+        val receiver = resolveValue(target, classes = direct)
+        if (receiver === Missing || receiver == null) return null
+        return ReflectionTarget(receiver, if (direct) receiver as Class<*> else receiver.javaClass, direct)
+    }
+
+    internal fun bridgeFailure(error: Throwable): String = failure(error)
+
+    private fun failure(error: Throwable): String {
+        val cause = if (error is InvocationTargetException) error.targetException else error
+        ports["lastError"] = cause
+        DebugLog.add("BRIDGE", "invocation failure", cause)
+        return "E:THROW:${cause.javaClass.name}:${cause.message.orEmpty()}"
+    }
+
+    private fun field(target: String, member: String, args: JSONArray): String {
+        val direct = tokenIndex(target) == null && !target.startsWith("@") && !target.startsWith("PP")
+        val receiver = resolveValue(target, classes = direct)
+        if (receiver === Missing) return "E:HANDLE"
+        val type = if (direct) receiver as Class<*> else receiver?.javaClass ?: return "E:NUL"
+        val set = member.startsWith("#set:")
+        val name = member.substringAfter(':')
+        val found: Field = runCatching { type.getField(name) }.getOrElse { return "E:FIELD" }
+        val operation = if (set) "field-set" else "field-get"
+        val policyRequest = request("java", operation, type, name, found.toGenericString())
+        if (!authorized(policyRequest)) return "E:POLICY"
+        return try {
+            val host = if (Modifier.isStatic(found.modifiers)) null else receiver
+            if (set) {
+                if (args.length() != 1) return "E:ARGS"
+                found.set(host, coerceFor(args.get(0), found.type).first)
+                "V"
+            } else keep(found.get(host))
+        } catch (error: Throwable) { failure(error) }
+    }
+
+    private fun newArray(target: String, args: JSONArray): String {
+        if (args.length() != 1) return "E:ARGS"
+        val type = runCatching { Class.forName(target, false, app.classLoader) }.getOrElse { return "E:CLASS" }
+        val policyRequest = request("java", "array-new", type, "[]", "java:array:${type.name}")
+        if (!authorized(policyRequest)) return "E:POLICY"
+        return runCatching { keep(java.lang.reflect.Array.newInstance(type, args.getInt(0))) }
+            .getOrElse(::failure)
+    }
+
+    private fun proxy(target: String, member: String, args: JSONArray, born: String): String {
+        val type = runCatching { Class.forName(target, false, app.classLoader) }.getOrElse { return "E:CLASS" }
+        if (!type.isInterface) return "E:TYPE"
+        val policyRequest = request("java", "proxy", type, member, "java:proxy:${type.name}")
+        if (!authorized(policyRequest)) return "E:POLICY"
+        val configured = if (args.length() > 0) args.get(0) else Missing
+        val returns = configured as? JSONObject
+        val channel = member.removePrefix("@proxy").trimStart(':').ifBlank { "default" }
+        val created = Proxy.newProxyInstance(type.classLoader, arrayOf(type)) { proxy, method, values ->
+            if (method.declaringClass == Any::class.java) return@newProxyInstance when (method.name) {
+                "toString" -> "BridgeProxy($channel)"
+                "hashCode" -> System.identityHashCode(proxy)
+                "equals" -> proxy === values?.firstOrNull()
+                else -> null
+            }
+            if (born != epoch) return@newProxyInstance zero(method.returnType)
+            val token = lease(values ?: emptyArray<Any?>(), born)
+            queue("proxy.$channel.${method.name}", 0, token, born, false, false, true)
+            val raw = when {
+                returns?.has(method.name) == true -> returns.get(method.name)
+                returns?.has("*") == true -> returns.get("*")
+                returns == null -> configured
+                else -> Missing
+            }
+            if (raw === Missing) zero(method.returnType)
+            else runCatching { coerceFor(raw, method.returnType).first }.getOrElse { zero(method.returnType) }
+        }
+        return keep(created, born)
+    }
+
+    private fun zero(type: Class<*>): Any? =
+        if (!type.isPrimitive || type == Void.TYPE) null
+        else java.lang.reflect.Array.get(java.lang.reflect.Array.newInstance(type, 1), 0)
+
+    private fun invokeOnMain(task: () -> Any?): Any? {
+        if (Looper.myLooper() == Looper.getMainLooper()) return task()
+        val future = FutureTask<Any?>(java.util.concurrent.Callable { task() })
+        if (!main.post(future)) throw IllegalStateException("main queue rejected call")
+        return future.get(30, TimeUnit.SECONDS)
+    }
+
+    private fun javaCall(target: String, memberRaw: String, args: JSONArray, born: String): String {
+        var member = memberRaw
+        val onMain = member.startsWith("!")
+        if (onMain) member = member.drop(1)
+        val deferred = member.startsWith("~")
+        if (deferred) member = member.drop(1)
+        val direct = tokenIndex(target) == null && !target.startsWith("@") && !target.startsWith("PP")
+        val receiver = resolveValue(target, classes = direct)
+        if (receiver === Missing) return if (target.startsWith("@")) "E:PORT" else "E:HANDLE"
+        if (receiver == null) return "E:NUL"
+        val type = if (direct) receiver as Class<*> else receiver.javaClass
+        val candidates: Sequence<Executable> = if (member.isEmpty() && !deferred) {
+            if (!direct) return "E:TYPE"
+            type.constructors.asSequence()
+        } else type.methods.asSequence().filter {
+            it.name == member && (!direct || Modifier.isStatic(it.modifiers))
+        }
+        val matches = candidates.mapNotNull { candidate -> match(candidate, args)?.let { candidate to it } }
+            .sortedWith(compareBy({ it.second.score }, { it.first.toGenericString() }))
+            .toList()
+        if (matches.isEmpty()) return "E:SIG"
+        val (candidate, matched) = matches.first()
+        val operation = when {
+            candidate is Constructor<*> -> "constructor"
+            deferred -> "cleanup"
+            else -> "method"
+        }
+        val policyRequest = request("java", operation, type, member, candidate.toGenericString())
+        if (!authorized(policyRequest)) return "E:POLICY"
+        return try {
+            if (deferred) {
+                if (candidate !is Method) return "E:TYPE"
+                keep(EpochCleanup(if (direct) null else receiver, candidate, matched.values, main), born)
+            } else {
+                val call = {
+                    if (candidate is Constructor<*>) candidate.newInstance(*matched.values)
+                    else (candidate as Method).invoke(if (direct) null else receiver, *matched.values)
+                }
+                keep(if (onMain) invokeOnMain(call) else call(), born)
+            }
+        } catch (error: Throwable) { failure(error) }
+    }
+
+    fun javaLookup(className: String): String {
+        val gate = validateEpoch() ?: ""
+        if (gate.isNotEmpty()) return gate
+        val type = runCatching { Class.forName(className, false, app.classLoader) }.getOrElse { return "E:CLASS" }
+        val policyRequest = request("java", "class-lookup", type, "", "java:class:${type.name}")
+        return if (authorized(policyRequest)) keep(type) else "E:POLICY"
+    }
+
+    fun executeJava(target: String, member: String, json: String, born: String = epoch): String {
+        validateEpoch(born)?.let { return it }
+        if (member == "+") return retain(target)
+        if (member == "-") return if (drop(target)) "V" else "E:HANDLE"
+        return try {
+            val args = JSONArray(json)
+            when {
+                member.startsWith("#get:") || member.startsWith("#set:") -> field(target, member, args)
+                member == "#array" -> newArray(target, args)
+                member.startsWith("@proxy") -> proxy(target, member, args, born)
+                else -> javaCall(target, member, args, born)
+            }
+        } catch (error: Throwable) { failure(error) }
+    }
+
+    fun executeKotlin(target: String, member: String, json: String, born: String = epoch): String {
+        validateEpoch(born)?.let { return it }
+        return KotlinDynamic.execute(target, member, json, born)
+    }
+
+    fun async(
+        engine: String,
+        target: String,
+        member: String,
+        json: String,
+        callback: Int,
+        legacy: Boolean = false
+    ): String {
+        val born = epoch
+        validateEpoch(born)?.let { return it }
+        if (callback <= 0) return "E:CALLBACK"
+        val pinned = runCatching { pinCall(target, member, json, born) }
+            .getOrElse { return failure(it) }
+        workers.execute {
+            try {
+                val value = if (born != epoch) "E:STALE" else if (engine == "kotlin")
+                    executeKotlin(pinned.target, member, pinned.json, born)
+                else executeJava(pinned.target, member, pinned.json, born)
+                if (born == epoch) queue("return", callback, value, born, true, legacy, false)
+            } finally {
+                pinned.pins.forEach(::drop)
+            }
+        }
+        return "W$callback"
+    }
+
+    private data class PinnedCall(val target: String, val json: String, val pins: Set<String>)
+
+    private fun pinCall(target: String, member: String, json: String, born: String): PinnedCall {
+        val mapped = HashMap<String, String>()
+        val pins = linkedSetOf<String>()
+        fun pin(raw: String): String {
+            if (raw == "P0") return raw
+            mapped[raw]?.let { return it }
+            val index = tokenIndex(raw) ?: return raw
+            val held = heap[index]?.takeIf { it.epoch == born }
+                ?: throw IllegalArgumentException("missing handle $raw")
+            return keep(copyLease(held.value), born).also { copy ->
+                if (copy.startsWith("E:")) throw IllegalStateException(copy)
+                if (copy.startsWith('P')) {
+                    mapped[raw] = copy
+                    pins += copy
+                }
+            }
+        }
+        fun copy(value: Any?): Any? = when (value) {
+            is String -> pin(value)
+            is JSONArray -> JSONArray().also { output ->
+                for (index in 0 until value.length()) output.put(copy(value.get(index)))
+            }
+            is JSONObject -> JSONObject().also { output ->
+                value.keys().forEach { key -> output.put(key, copy(value.get(key))) }
+            }
+            else -> value
+        }
+        val input = if (json.trimStart().startsWith('{')) JSONObject(json) else JSONArray(json)
+        val pinnedJson = copy(input).toString()
+        val pinnedTarget = if (member == "-") target else pin(target)
+        return PinnedCall(pinnedTarget, pinnedJson, pins)
+    }
+
+    fun runTsv(source: String, callback: Int): String {
+        val born = epoch
+        validateEpoch(born)?.let { return it }
+        if (callback <= 0) return "E:CALLBACK"
+        val lines = source.lineSequence().map(String::trim).filter { it.isNotEmpty() && !it.startsWith('#') }
+            .take(513).toList()
+        if (lines.size > 512) return "E:LIMIT"
+        workers.execute {
+            val results = JSONArray()
+            for (line in lines) {
+                if (born != epoch) break
+                val columns = line.split('\t', limit = 4)
+                if (columns.size < 3) {
+                    results.put("E:TSV")
+                    continue
+                }
+                val engine = if (columns.size == 4) columns[0] else "java"
+                val offset = if (columns.size == 4) 1 else 0
+                val target = columns[offset]
+                val member = columns[offset + 1]
+                val arguments = columns.getOrElse(offset + 2) { "[]" }
+                results.put(if (engine == "kotlin") executeKotlin(target, member, arguments, born)
+                else executeJava(target, member, arguments, born))
+            }
+            if (born == epoch) result("tsv", callback, results.toString(), born)
+        }
+        return "W$callback"
+    }
+
+    fun legacyProxy(id: Int, method: String, values: Array<out Any?>?, born: String) {
+        if (born.isEmpty() || born != epoch) return
+        val tokens = JSONArray()
+        values?.forEach { tokens.put(keep(copyLease(it), born)) }
+        val script = "window.onL&&window.onL($id,${JSONObject.quote(method)},${JSONObject.quote(tokens.toString())})"
+        main.post {
+            if (born == epoch && ready && web != null)
+                web?.evaluateJavascript(script, null)
+        }
+    }
+
+    const val DEFAULT_ORIGIN = "https://html.realizer.local/"
+    const val DEFAULT_EDITOR = "<!DOCTYPE html><title>HTML Realizer</title><style>body{margin:0;padding:4px;background:#111;font-family:monospace}div{min-height:40vh;background:#222;color:#eee;border:solid #444;padding:8px;white-space:pre-wrap;margin-bottom:4px;overflow:auto}button{border:0;background:#058;color:#fff;width:100%;height:5vh;font-size:2vh}</style><div id=i contenteditable=\"plaintext-only\" oninput=\"c.textContent=i.textContent.length\"></div><button onclick=\"var code=i.textContent;document.open();document.write(code);document.close()\">Realize (<b id=c>0</b> characters)</button>\n"
+}
+
+class EpochCleanup internal constructor(
+    private val receiver: Any?,
+    private val method: Method,
+    private val arguments: Array<Any?>,
+    private val handler: Handler
+) : AutoCloseable {
+    @Volatile private var pending = true
+    @Synchronized fun cancel() { pending = false }
+    @Synchronized override fun close() {
+        if (!pending) return
+        pending = false
+        val task = Runnable { runCatching { method.invoke(receiver, *arguments) } }
+        if (!handler.post(task)) task.run()
+    }
+}
+===== END FILE: app/src/main/java/a/htmlapprealizer/Core.kt =====
+
+===== BEGIN FILE: app/src/main/java/a/htmlapprealizer/GlobalService.kt =====
+package a.htmlapprealizer
+
+import android.accessibilityservice.AccessibilityGestureEvent
+import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.GestureDescription
+import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.Path
+import android.graphics.Rect
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
+import android.util.Base64
+import android.view.Display
+import android.view.Gravity
+import android.view.KeyEvent
+import android.view.MotionEvent
+import android.view.View
+import android.view.WindowManager
+import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityWindowInfo
+import android.webkit.JavascriptInterface
+import android.webkit.RenderProcessGoneDetail
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.ByteArrayOutputStream
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+
+class GlobalService : AccessibilityService() {
+    private val main = Handler(Looper.getMainLooper())
+    private val screenshotExecutor: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "html-realizer-screenshot").apply { isDaemon = true }
+    }
+    private var sequenceStep = 0
+    private var sequenceStarted = 0L
+    private var overlayView: WebView? = null
+    private var overlayEpoch = ""
+    private var overlayParameters: WindowManager.LayoutParams? = null
+
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        instance = this
+        Core.port("accessibility", this)
+        DebugLog.add("ACCESSIBILITY", "service connected")
+    }
+
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        event?.let { Core.event("accessibility.event", it.eventType, it) }
+    }
+
+    override fun onInterrupt() { Core.event("accessibility.interrupt") }
+
+    override fun onGesture(gestureId: Int): Boolean {
+        Core.event("accessibility.gesture", gestureId, gestureId)
+        return consumeGestures || super.onGesture(gestureId)
+    }
+
+    override fun onGesture(gestureEvent: AccessibilityGestureEvent): Boolean {
+        Core.event("accessibility.gesture", gestureEvent.gestureId, gestureEvent)
+        return consumeGestures
+    }
+
+    override fun onMotionEvent(event: MotionEvent) {
+        Core.event("accessibility.motion", event.action, event)
+    }
+
+    override fun onKeyEvent(event: KeyEvent): Boolean {
+        Core.event("accessibility.key", event.keyCode, event)
+        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+            val sequence = emergencySequence
+            if (sequence.isNotEmpty()) {
+                val now = SystemClock.elapsedRealtime()
+                if (now - sequenceStarted > sequenceTimeoutMs || sequenceStep >= sequence.size)
+                    sequenceStep = 0
+                if (sequenceStep == 0) sequenceStarted = now
+                sequenceStep = if (event.keyCode == sequence[sequenceStep]) sequenceStep + 1
+                else if (event.keyCode == sequence[0]) 1 else 0
+                if (sequenceStep == sequence.size) {
+                    sequenceStep = 0
+                    closeOverlay("emergency-disable")
+                    disableSelf()
+                    return true
+                }
+            }
+        }
+        return consumeKeys || super.onKeyEvent(event)
+    }
+
+    fun screenTree(maxNodes: Int = 1000): String {
+        val limit = maxNodes.coerceIn(1, 5000)
+        val count = intArrayOf(0)
+        val result = JSONObject().put("windows", JSONArray())
+        val output = result.getJSONArray("windows")
+        val currentWindows = windows
+        try {
+            for (window in currentWindows) {
+                if (count[0] >= limit) break
+                val bounds = Rect().also(window::getBoundsInScreen)
+                val value = JSONObject()
+                    .put("id", window.id)
+                    .put("type", window.type)
+                    .put("layer", window.layer)
+                    .put("active", window.isActive)
+                    .put("focused", window.isFocused)
+                    .put("accessibilityFocused", window.isAccessibilityFocused)
+                    .put("title", window.title?.toString().orEmpty())
+                    .put("bounds", rectJson(bounds))
+                val root = window.root
+                if (root != null) {
+                    try { value.put("root", nodeTree(root, JSONArray(), count, limit)) }
+                    finally { recycle(root) }
+                }
+                output.put(value)
+            }
+        } finally {
+            currentWindows.forEach(::recycle)
+        }
+        result.put("truncated", count[0] >= limit)
+        result.put("nodeCount", count[0])
+        return result.toString()
+    }
+
+    fun find(query: String, maxNodes: Int = 100): String {
+        val needle = query.lowercase()
+        val result = JSONArray()
+        val root = rootInActiveWindow ?: return result.toString()
+        try { findNodes(root, JSONArray(), needle, result, maxNodes.coerceIn(1, 1000)) }
+        finally { recycle(root) }
+        return result.toString()
+    }
+
+    fun perform(locatorJson: String, actionName: String, argument: String = ""): Boolean {
+        val locator = runCatching { JSONObject(locatorJson) }.getOrNull() ?: return false
+        val node = resolveLocator(locator) ?: return false
+        return try {
+            val action = actionName.toIntOrNull() ?: when (actionName.lowercase()) {
+                "click" -> AccessibilityNodeInfo.ACTION_CLICK
+                "longclick", "long-click" -> AccessibilityNodeInfo.ACTION_LONG_CLICK
+                "focus" -> AccessibilityNodeInfo.ACTION_FOCUS
+                "accessibilityfocus", "accessibility-focus" -> AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS
+                "clearfocus", "clear-focus" -> AccessibilityNodeInfo.ACTION_CLEAR_FOCUS
+                "scrollforward", "scroll-forward" -> AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+                "scrollbackward", "scroll-backward" -> AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+                "show", "showonscreen" -> AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.id
+                "settext", "set-text" -> AccessibilityNodeInfo.ACTION_SET_TEXT
+                else -> return false
+            }
+            val arguments = if (action == AccessibilityNodeInfo.ACTION_SET_TEXT) Bundle().apply {
+                putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, argument)
+            } else null
+            performWithParents(node, action, arguments)
+        } finally { recycle(node) }
+    }
+
+    private fun performWithParents(
+        initial: AccessibilityNodeInfo,
+        action: Int,
+        arguments: Bundle?
+    ): Boolean {
+        var node: AccessibilityNodeInfo? = initial
+        var ownsNode = false
+        while (node != null) {
+            if (node.performAction(action, arguments)) {
+                if (ownsNode) recycle(node)
+                return true
+            }
+            val parent = node.parent
+            if (ownsNode) recycle(node)
+            node = parent
+            ownsNode = true
+        }
+        return false
+    }
+
+    fun tap(x: Float, y: Float, durationMs: Long = 35): Boolean {
+        val path = Path().apply { moveTo(x, y) }
+        return dispatch(path, 0, durationMs)
+    }
+
+    fun longPress(x: Float, y: Float, durationMs: Long = 700): Boolean =
+        tap(x, y, durationMs)
+
+    fun swipe(
+        x1: Float, y1: Float, x2: Float, y2: Float, durationMs: Long = 300
+    ): Boolean {
+        val path = Path().apply { moveTo(x1, y1); lineTo(x2, y2) }
+        return dispatch(path, 0, durationMs)
+    }
+
+    private fun dispatch(path: Path, startMs: Long, durationMs: Long): Boolean =
+        dispatchGesture(
+            GestureDescription.Builder().addStroke(
+                GestureDescription.StrokeDescription(
+                    path, startMs.coerceAtLeast(0), durationMs.coerceAtLeast(1)
+                )
+            ).build(), GestureEvents(), main
+        )
+
+    fun gestures(specification: String): Boolean {
+        val strokes = JSONArray(specification)
+        if (strokes.length() !in 1..128) return false
+        val builder = GestureDescription.Builder()
+        for (index in 0 until strokes.length()) {
+            val stroke = strokes.getJSONObject(index)
+            builder.addStroke(
+                GestureDescription.StrokeDescription(
+                    path(stroke),
+                    stroke.optLong("d", stroke.optLong("start", 0)).coerceAtLeast(0),
+                    stroke.optLong("ms", stroke.optLong("duration", 35)).coerceAtLeast(1)
+                )
+            )
+        }
+        return dispatchGesture(builder.build(), GestureEvents(), main)
+    }
+
+    private fun path(value: JSONObject): Path {
+        val result = Path()
+        val points = value.optJSONArray("points") ?: value.optJSONArray("p")
+        if (points != null && points.length() > 0) {
+            val first = points.getJSONArray(0)
+            result.moveTo(first.getDouble(0).toFloat(), first.getDouble(1).toFloat())
+            for (index in 1 until points.length()) {
+                val point = points.getJSONArray(index)
+                result.lineTo(point.getDouble(0).toFloat(), point.getDouble(1).toFloat())
+            }
+        } else if (value.has("x")) {
+            result.moveTo(value.getDouble("x").toFloat(), value.getDouble("y").toFloat())
+        } else {
+            result.moveTo(value.getDouble("x1").toFloat(), value.getDouble("y1").toFloat())
+            result.lineTo(value.getDouble("x2").toFloat(), value.getDouble("y2").toFloat())
+        }
+        return result
+    }
+
+    fun global(action: Int): Boolean = performGlobalAction(action)
+    fun back(): Boolean = performGlobalAction(GLOBAL_ACTION_BACK)
+    fun home(): Boolean = performGlobalAction(GLOBAL_ACTION_HOME)
+    fun recents(): Boolean = performGlobalAction(GLOBAL_ACTION_RECENTS)
+    fun notifications(): Boolean = performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS)
+    fun quickSettings(): Boolean = performGlobalAction(GLOBAL_ACTION_QUICK_SETTINGS)
+
+    fun screenshot(
+        left: Int = -1,
+        top: Int = -1,
+        right: Int = -1,
+        bottom: Int = -1,
+        maxWidth: Int = 1080,
+        quality: Int = 82
+    ): String {
+        val latch = CountDownLatch(1)
+        var output = "E:TIMEOUT"
+        takeScreenshot(Display.DEFAULT_DISPLAY, screenshotExecutor, object : TakeScreenshotCallback {
+            override fun onSuccess(result: ScreenshotResult) {
+                output = runCatching {
+                    val source = Bitmap.wrapHardwareBuffer(result.hardwareBuffer, result.colorSpace)
+                        ?.copy(Bitmap.Config.ARGB_8888, false) ?: error("hardware buffer conversion failed")
+                    result.hardwareBuffer.close()
+                    val requested = if (left >= 0 && top >= 0 && right > left && bottom > top)
+                        Rect(left.coerceAtLeast(0), top.coerceAtLeast(0), right.coerceAtMost(source.width), bottom.coerceAtMost(source.height))
+                    else Rect(0, 0, source.width, source.height)
+                    require(requested.width() > 0 && requested.height() > 0) { "empty crop" }
+                    val cropped = Bitmap.createBitmap(
+                        source, requested.left, requested.top, requested.width(), requested.height()
+                    )
+                    val scaled = if (maxWidth > 0 && cropped.width > maxWidth)
+                        Bitmap.createScaledBitmap(
+                            cropped, maxWidth, (cropped.height * maxWidth / cropped.width).coerceAtLeast(1), true
+                        ) else cropped
+                    val bytes = ByteArrayOutputStream()
+                    scaled.compress(Bitmap.CompressFormat.JPEG, quality.coerceIn(1, 100), bytes)
+                    JSONObject()
+                        .put("width", scaled.width)
+                        .put("height", scaled.height)
+                        .put("mime", "image/jpeg")
+                        .put("base64", Base64.encodeToString(bytes.toByteArray(), Base64.NO_WRAP))
+                        .toString()
+                }.getOrElse { "E:SCREENSHOT:${it.message.orEmpty()}" }
+                latch.countDown()
+            }
+
+            override fun onFailure(errorCode: Int) {
+                output = "E:SCREENSHOT:$errorCode"
+                latch.countDown()
+            }
+        })
+        latch.await(8, TimeUnit.SECONDS)
+        return output
+    }
+
+    fun openOverlay(html: String, mode: String, configuration: String): String {
+        if (html.length > 1_000_000) return "E:LIMIT"
+        val born = Core.currentEpoch()
+        if (born.isEmpty()) return "E:STALE"
+        return onMain {
+            closeOverlayInternal("replace")
+            val config = runCatching { JSONObject(configuration.ifBlank { "{}" }) }.getOrDefault(JSONObject())
+            val density = resources.displayMetrics.density
+            fun pixels(key: String, fallbackDp: Int): Int =
+                (config.optDouble(key, fallbackDp.toDouble()) * density).toInt().coerceAtLeast(1)
+            val parameters = WindowManager.LayoutParams(
+                pixels("width", 240),
+                pixels("height", 180),
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                android.graphics.PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity = Gravity.TOP or Gravity.START
+                x = pixels("x", 0)
+                y = pixels("y", 0)
+                alpha = config.optDouble("alpha", 1.0).toFloat().coerceIn(0.05f, 1f)
+            }
+            when (mode.uppercase()) {
+                "PLACE" -> parameters.flags = parameters.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                "VISUAL" -> parameters.flags = parameters.flags or
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                "HIDDEN" -> parameters.flags = parameters.flags or
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                else -> return@onMain "E:MODE"
+            }
+            val view = WebView(this).apply {
+                setBackgroundColor(Color.TRANSPARENT)
+                settings.javaScriptEnabled = true
+                settings.domStorageEnabled = false
+                addJavascriptInterface(OverlayBridge(born), "O")
+                webViewClient = overlayClient()
+                visibility = if (mode.equals("HIDDEN", true)) View.GONE else View.VISIBLE
+                loadDataWithBaseURL(Core.DEFAULT_ORIGIN, html, "text/html", "utf-8", null)
+            }
+            getSystemService(WindowManager::class.java).addView(view, parameters)
+            overlayView = view
+            overlayParameters = parameters
+            overlayEpoch = born
+            Core.port("overlay", view)
+            "V"
+        }
+    }
+
+    fun evaluateOverlay(script: String): String = onMain {
+        val view = overlayView ?: return@onMain "E:OVERLAY"
+        if (overlayEpoch != Core.currentEpoch()) return@onMain "E:STALE"
+        view.evaluateJavascript(script, null)
+        "V"
+    }
+
+    fun closeOverlay(reason: String): Boolean = onMain {
+        closeOverlayInternal(reason)
+        true
+    } == true
+
+    private fun closeOverlayInternal(reason: String) {
+        val view = overlayView ?: return
+        overlayView = null
+        overlayParameters = null
+        overlayEpoch = ""
+        Core.port("overlay", view, live = false)
+        runCatching { getSystemService(WindowManager::class.java).removeViewImmediate(view) }
+        runCatching { view.destroy() }
+        DebugLog.add("OVERLAY", "closed: $reason")
+    }
+
+    private fun overlayClient() = object : WebViewClient() {
+        override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean =
+            !HostPolicy.isAllowed(request?.url, Core.policyOrNull())
+
+        override fun shouldInterceptRequest(
+            view: WebView?, request: WebResourceRequest?
+        ): WebResourceResponse? = if (HostPolicy.isAllowed(request?.url, Core.policyOrNull())) null
+        else HostPolicy.blocked()
+
+        override fun onRenderProcessGone(view: WebView?, detail: RenderProcessGoneDetail?): Boolean {
+            closeOverlay("renderer-gone")
+            return true
+        }
+    }
+
+    private fun <T> onMain(action: () -> T): T {
+        if (Looper.myLooper() == Looper.getMainLooper()) return action()
+        val latch = CountDownLatch(1)
+        var value: Result<T>? = null
+        main.post {
+            value = runCatching(action)
+            latch.countDown()
+        }
+        if (!latch.await(30, TimeUnit.SECONDS)) throw IllegalStateException("main thread timeout")
+        return value!!.getOrThrow()
+    }
+
+    private fun nodeTree(
+        node: AccessibilityNodeInfo,
+        path: JSONArray,
+        count: IntArray,
+        limit: Int
+    ): JSONObject {
+        count[0]++
+        val value = nodeJson(node, path)
+        val children = JSONArray()
+        if (count[0] < limit) {
+            for (index in 0 until node.childCount) {
+                if (count[0] >= limit) break
+                val child = node.getChild(index) ?: continue
+                try {
+                    val childPath = JSONArray(path.toString()).put(index)
+                    children.put(nodeTree(child, childPath, count, limit))
+                } finally { recycle(child) }
+            }
+        }
+        value.put("children", children)
+        return value
+    }
+
+    private fun nodeJson(node: AccessibilityNodeInfo, path: JSONArray): JSONObject {
+        val bounds = Rect().also(node::getBoundsInScreen)
+        val actions = JSONArray()
+        node.actionList.forEach { action ->
+            actions.put(JSONObject().put("id", action.id).put("label", action.label?.toString().orEmpty()))
+        }
+        return JSONObject()
+            .put("locator", JSONObject()
+                .put("windowId", node.windowId)
+                .put("path", path)
+                .put("viewId", node.viewIdResourceName.orEmpty())
+                .put("class", node.className?.toString().orEmpty())
+                .put("package", node.packageName?.toString().orEmpty())
+                .put("bounds", rectJson(bounds)))
+            .put("text", node.text?.toString().orEmpty())
+            .put("contentDescription", node.contentDescription?.toString().orEmpty())
+            .put("viewId", node.viewIdResourceName.orEmpty())
+            .put("package", node.packageName?.toString().orEmpty())
+            .put("class", node.className?.toString().orEmpty())
+            .put("bounds", rectJson(bounds))
+            .put("enabled", node.isEnabled)
+            .put("clickable", node.isClickable)
+            .put("longClickable", node.isLongClickable)
+            .put("editable", node.isEditable)
+            .put("scrollable", node.isScrollable)
+            .put("checkable", node.isCheckable)
+            .put("checked", node.isChecked)
+            .put("selected", node.isSelected)
+            .put("focused", node.isFocused)
+            .put("accessibilityFocused", node.isAccessibilityFocused)
+            .put("password", node.isPassword)
+            .put("visible", node.isVisibleToUser)
+            .put("actions", actions)
+    }
+
+    private fun findNodes(
+        node: AccessibilityNodeInfo,
+        path: JSONArray,
+        query: String,
+        output: JSONArray,
+        limit: Int
+    ) {
+        val haystack = listOf(
+            node.text, node.contentDescription, node.viewIdResourceName, node.className, node.packageName
+        ).joinToString("\n") { it?.toString().orEmpty() }.lowercase()
+        if ((query.isBlank() || query == "*" || haystack.contains(query)) && output.length() < limit)
+            output.put(nodeJson(node, path))
+        for (index in 0 until node.childCount) {
+            if (output.length() >= limit) break
+            val child = node.getChild(index) ?: continue
+            try { findNodes(child, JSONArray(path.toString()).put(index), query, output, limit) }
+            finally { recycle(child) }
+        }
+    }
+
+    private fun resolveLocator(locator: JSONObject): AccessibilityNodeInfo? {
+        val windowId = locator.optInt("windowId", -1)
+        val path = locator.optJSONArray("path") ?: JSONArray()
+        val currentWindows = windows
+        val matchingWindow = currentWindows.firstOrNull { it.id == windowId }
+        var node = matchingWindow?.root ?: rootInActiveWindow
+        if (node == null) {
+            currentWindows.forEach(::recycle)
+            return null
+        }
+        try {
+            for (index in 0 until path.length()) {
+                val child = node.getChild(path.getInt(index))
+                if (child == null) {
+                    recycle(node)
+                    return null
+                }
+                recycle(node)
+                node = child
+            }
+            val expectedId = locator.optString("viewId")
+            val expectedClass = locator.optString("class")
+            val expectedPackage = locator.optString("package")
+            if (expectedId.isNotBlank() && node.viewIdResourceName != expectedId ||
+                expectedClass.isNotBlank() && node.className?.toString() != expectedClass ||
+                expectedPackage.isNotBlank() && node.packageName?.toString() != expectedPackage
+            ) {
+                recycle(node)
+                return null
+            }
+            return node
+        } finally {
+            currentWindows.forEach(::recycle)
+        }
+    }
+
+    private fun rectJson(value: Rect) = JSONObject()
+        .put("left", value.left).put("top", value.top)
+        .put("right", value.right).put("bottom", value.bottom)
+
+    @Suppress("DEPRECATION")
+    private fun recycle(value: AccessibilityNodeInfo) { runCatching { value.recycle() } }
+    @Suppress("DEPRECATION")
+    private fun recycle(value: AccessibilityWindowInfo) { runCatching { value.recycle() } }
+
+    override fun onDestroy() {
+        closeOverlay("service-destroyed")
+        Core.port("accessibility", this, live = false)
+        if (instance === this) instance = null
+        screenshotExecutor.shutdownNow()
+        DebugLog.add("ACCESSIBILITY", "service destroyed")
+        super.onDestroy()
+    }
+
+    companion object {
+        @Volatile @JvmField var instance: GlobalService? = null
+        @Volatile @JvmField var emergencySequence = intArrayOf(
+            KeyEvent.KEYCODE_VOLUME_DOWN,
+            KeyEvent.KEYCODE_VOLUME_UP,
+            KeyEvent.KEYCODE_VOLUME_DOWN,
+            KeyEvent.KEYCODE_VOLUME_UP
+        )
+        @Volatile @JvmField var sequenceTimeoutMs = 5000L
+        @Volatile @JvmField var consumeKeys = false
+        @Volatile @JvmField var consumeGestures = false
+    }
+}
+
+private class GestureEvents : AccessibilityService.GestureResultCallback() {
+    private val born = Core.currentEpoch()
+    override fun onCompleted(gestureDescription: GestureDescription?) {
+        if (born == Core.currentEpoch()) Core.event("gesture.completed", 0, gestureDescription)
+    }
+    override fun onCancelled(gestureDescription: GestureDescription?) {
+        if (born == Core.currentEpoch()) Core.event("gesture.cancelled", 0, gestureDescription)
+    }
+}
+
+private class OverlayBridge(private val born: String) {
+    @JavascriptInterface fun post(type: String, json: String): Boolean =
+        born == Core.currentEpoch() && Core.event("overlay.$type", 0, json)
+
+    @JavascriptInterface fun close(): Boolean =
+        born == Core.currentEpoch() && GlobalService.instance?.closeOverlay("overlay-request") == true
+}
+===== END FILE: app/src/main/java/a/htmlapprealizer/GlobalService.kt =====
+
+===== BEGIN FILE: app/src/main/java/a/htmlapprealizer/Main.kt =====
+package a.htmlapprealizer
+
+import android.Manifest
+import android.app.Activity
+import android.app.AlertDialog
+import android.app.NotificationManager
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Color
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
+import android.os.Handler
+import android.os.Looper
+import android.os.PowerManager
+import android.provider.Settings
+import android.text.Editable
+import android.text.InputType
+import android.text.TextWatcher
+import android.view.Gravity
+import android.view.KeyEvent
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowInsets
+import android.webkit.WebView
+import android.widget.Button
+import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
+import android.widget.Toast
+import java.util.Locale
+
+class Main : Activity() {
+    private lateinit var frame: FrameLayout
+    private lateinit var control: Button
+    private lateinit var policy: PolicyStore
+    private val main = Handler(Looper.getMainLooper())
+    private var visibilityMode = 0
+
+    override fun onCreate(state: Bundle?) {
+        super.onCreate(state)
+        if (Build.VERSION.SDK_INT >= 31) window.setHideOverlayWindows(true)
+        policy = PolicyStore.get(this)
+        visibilityMode = policy.visibilityMode
+        frame = FrameLayout(this)
+        mount(Core.attach(this))
+        createControl()
+        setContentView(frame)
+        frame.requestApplyInsets()
+        applyVisibility(visibilityMode)
+        DebugLog.add("ACTIVITY", "created")
+    }
+
+    private fun createControl() {
+        val density = resources.displayMetrics.density
+        val size = (68 * density).toInt()
+        control = Button(this).apply {
+            filterTouchesWhenObscured = true
+            textSize = 11f
+            setTextColor(Color.WHITE)
+            setBackgroundColor(0xdd202020.toInt())
+            contentDescription = "Open native HTML Realizer settings"
+            setOnClickListener { showSettings() }
+            setOnLongClickListener {
+                Core.loadDefaultEditor()
+                Toast.makeText(this@Main, "Default editor restored", Toast.LENGTH_SHORT).show()
+                true
+            }
+        }
+        frame.addView(control, FrameLayout.LayoutParams(size * 2, size, Gravity.TOP or Gravity.END))
+        frame.setOnApplyWindowInsetsListener { _, insets ->
+            val layout = control.layoutParams as FrameLayout.LayoutParams
+            val bounds = windowManager.currentWindowMetrics.bounds
+            val safe = runCatching {
+                insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+            }.getOrNull()
+            val diameter = maxOf(layout.width, layout.height)
+            fun safeMargin(cutout: Int, edge: Int): Int = minOf(
+                if (safe == null) diameter + edge / 67 else maxOf(diameter, cutout),
+                maxOf(0, minOf(edge / 2, edge - diameter))
+            )
+            layout.topMargin = safeMargin(safe?.top ?: 0, bounds.height())
+            layout.marginEnd = safeMargin(
+                if (control.layoutDirection == View.LAYOUT_DIRECTION_RTL) safe?.left ?: 0 else safe?.right ?: 0,
+                bounds.width()
+            )
+            control.layoutParams = layout
+            insets
+        }
+        refreshNativeState()
+    }
+
+    fun mount(view: WebView) {
+        if (!::frame.isInitialized) return
+        (view.parent as? ViewGroup)?.removeView(view)
+        frame.addView(view, 0, FrameLayout.LayoutParams(-1, -1))
+    }
+
+    fun refreshNativeState() {
+        if (!::control.isInitialized) return
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            runOnUiThread(::refreshNativeState)
+            return
+        }
+        val bridge = if (policy.bridgeEnabled) "B+" else "B−"
+        val sandbox = if (policy.sandboxEnabled) "S+" else "S−"
+        val auth = if (Core.isAuthenticated()) "A+" else "A−"
+        control.text = "⚙ $bridge $sandbox $auth\n${Core.documentLabel()}"
+        control.setBackgroundColor(
+            when {
+                !policy.bridgeEnabled -> 0xdd4d1b1b.toInt()
+                policy.sandboxEnabled -> 0xdd665100.toInt()
+                Core.isAuthenticated() -> 0xdd0b6127.toInt()
+                else -> 0xdd50306f.toInt()
+            }
+        )
+    }
+
+    private fun applyVisibility(mode: Int) {
+        visibilityMode = mode.coerceIn(0, 3)
+        policy.setVisibilityMode(visibilityMode)
+        control.visibility = if (visibilityMode == 0) View.VISIBLE else View.GONE
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::control.isInitialized && visibilityMode == 1) applyVisibility(0)
+        refreshNativeState()
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP && ::control.isInitialized) {
+            control.visibility = View.VISIBLE
+            main.postDelayed({ if (!isFinishing) applyVisibility(visibilityMode) }, 3000)
+            return false
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    private fun showSettings() {
+        val scroll = ScrollView(this)
+        val column = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32, 24, 32, 32)
+            setBackgroundColor(0xff292929.toInt())
+        }
+        scroll.addView(column)
+
+        fun heading(value: String) = column.addView(TextView(this).apply {
+            text = value
+            textSize = 18f
+            setTextColor(0xff8bd5ff.toInt())
+            setPadding(0, 18, 0, 6)
+        })
+        fun note(value: String) = column.addView(TextView(this).apply {
+            text = value
+            textSize = 13f
+            setTextColor(0xffdddddd.toInt())
+            setPadding(4, 3, 4, 10)
+        })
+        fun button(value: String, action: (Button) -> Unit): Button = Button(this).apply {
+            text = value
+            setAllCaps(false)
+            setOnClickListener { action(this) }
+            column.addView(this)
+        }
+        fun editor(label: String, value: String, password: Boolean = false, changed: (String) -> Unit) {
+            note(label)
+            val input = EditText(this).apply {
+                setText(value)
+                setTextColor(Color.WHITE)
+                setHintTextColor(0xffaaaaaa.toInt())
+                setBackgroundColor(0xff3a3a3a.toInt())
+                minLines = if (password) 1 else 2
+                if (password) inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            }
+            input.addTextChangedListener(object : TextWatcher {
+                override fun afterTextChanged(text: Editable?) = changed(text?.toString().orEmpty())
+                override fun beforeTextChanged(value: CharSequence?, start: Int, count: Int, after: Int) = Unit
+                override fun onTextChanged(value: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            })
+            column.addView(input)
+        }
+
+        heading("Recovery and state")
+        note(nativeStatus())
+        button("Reload exact default editor") { Core.loadDefaultEditor() }
+        button("Recreate runtime WebView") { Core.recreateWebView() }
+        button("Revoke epoch, handles, callbacks, and temporary grants") { Core.revoke("native-revoke") }
+        button("Export native diagnostic log") { createDiagnosticDocument() }
+
+        heading("Independent security controls")
+        button("Bridge: ${onOff(policy.bridgeEnabled)}") { source ->
+            policy.setBridge(!policy.bridgeEnabled)
+            source.text = "Bridge: ${onOff(policy.bridgeEnabled)}"
+            refreshNativeState()
+        }
+        button("Sandbox: ${onOff(policy.sandboxEnabled)}") { source ->
+            policy.setSandbox(!policy.sandboxEnabled)
+            source.text = "Sandbox: ${onOff(policy.sandboxEnabled)}"
+            refreshNativeState()
+        }
+        editor("Password (changing it revokes the current epoch)", policy.password, password = true) {
+            if (it != policy.password) policy.setPassword(it)
+        }
+        note("Bridge OFF is the master gate. Sandbox ON blocks privileged calls. Authentication is per document. Blacklist always wins over Whitelist.")
+
+        heading("HTML/WebView Internet")
+        button("Cut HTML Internet: ${onOff(policy.cutHtmlInternet)}") { source ->
+            policy.setCutHtmlInternet(!policy.cutHtmlInternet)
+            source.text = "Cut HTML Internet: ${onOff(policy.cutHtmlInternet)}"
+        }
+        editor("Exception hosts, one per line (exact host and subdomains)", policy.domainText()) {
+            policy.setDomains(it)
+        }
+        note("This controls WebView requests, not reflected java.net, sockets, Android networking services, or a device firewall. WebSocket interception remains platform-limited.")
+
+        heading("Reflection policy")
+        editor("Blacklist", policy.ruleText(RuleDecision.BLACK)) {
+            policy.setRules(RuleDecision.BLACK, it)
+        }
+        editor("Graylist", policy.ruleText(RuleDecision.GRAY)) {
+            policy.setRules(RuleDecision.GRAY, it)
+        }
+        editor("Whitelist", policy.ruleText(RuleDecision.WHITE)) {
+            policy.setRules(RuleDecision.WHITE, it)
+        }
+        note("Scopes: all, package:name, class:name, member:class#name, signature:value. Migrated old entries are shown as legacy:substring.")
+
+        heading("Runtime and Android consent")
+        button("Start foreground runtime") { startForegroundService(Intent(this, RuntimeService::class.java)) }
+        button("Stop foreground runtime") { stopService(Intent(this, RuntimeService::class.java)) }
+        button("Select runtime permissions") { showRuntimePermissionPicker() }
+        button("Accessibility settings — ${enabled(CapabilityFacade.accessibilityEnabled(this))}") {
+            openSettings(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        }
+        button("Notification access — ${enabled(CapabilityFacade.notificationAccessEnabled(this))}") {
+            openSettings(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+        }
+        button("Overlay access — ${enabled(Settings.canDrawOverlays(this))}") {
+            openSettings(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+        }
+        button("MediaProjection consent") { CapabilityFacade.startProjectionConsent(this) }
+        button("Exact alarm access — ${enabled(CapabilityFacade.exactAlarmEnabled(this))}") {
+            if (Build.VERSION.SDK_INT >= 31)
+                openSettings(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName")))
+        }
+        button("All-files access — ${enabled(Environment.isExternalStorageManager())}") {
+            openSettings(Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:$packageName")))
+        }
+        val power = getSystemService(PowerManager::class.java)
+        button("Battery exemption — ${enabled(power.isIgnoringBatteryOptimizations(packageName))}") {
+            openSettings(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
+        }
+        button("App details and permission state") {
+            openSettings(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+        }
+
+        heading("Settings visibility and emergency recovery")
+        note("Volume Up reveals this control for three seconds. Long-pressing it restores the exact default editor.")
+        listOf(
+            "Always visible" to 0,
+            "Hide until next focus" to 1,
+            "Hide until next app open" to 2,
+            "Hide persistently" to 3
+        ).forEach { (label, mode) -> button(label) { applyVisibility(mode) } }
+
+        AlertDialog.Builder(this)
+            .setTitle("HTML Realizer J — native control plane")
+            .setView(scroll)
+            .setPositiveButton("Close", null)
+            .show()
+    }
+
+    private fun showRuntimePermissionPicker() {
+        val permissions = buildList {
+            add(Manifest.permission.CAMERA)
+            add(Manifest.permission.RECORD_AUDIO)
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
+            if (Build.VERSION.SDK_INT >= 33) add(Manifest.permission.POST_NOTIFICATIONS)
+        }.toTypedArray()
+        val selected = BooleanArray(permissions.size)
+        AlertDialog.Builder(this)
+            .setTitle("Request only selected permissions")
+            .setMultiChoiceItems(permissions, selected) { _, which, checked -> selected[which] = checked }
+            .setPositiveButton("Request") { _, _ ->
+                val requested = permissions.filterIndexed { index, _ -> selected[index] }.toTypedArray()
+                if (requested.isNotEmpty()) requestPermissions(requested, REQUEST_RUNTIME_PERMISSIONS)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun openSettings(intent: Intent) {
+        runCatching { startActivity(intent) }
+            .onFailure { Toast.makeText(this, it.message.orEmpty(), Toast.LENGTH_LONG).show() }
+    }
+
+    private fun createDiagnosticDocument() {
+        startActivityForResult(
+            Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TITLE, "app_realizer_j_diagnostics.txt")
+            }, REQUEST_EXPORT_LOG
+        )
+    }
+
+    private fun nativeStatus(): String = buildString {
+        append("Bridge=").append(onOff(policy.bridgeEnabled))
+        append("  Sandbox=").append(onOff(policy.sandboxEnabled))
+        append("  Auth=").append(enabled(Core.isAuthenticated()))
+        append("\nEpoch=").append(if (Core.currentEpoch().isBlank()) "none" else Core.currentEpoch().take(8))
+        append("  Handles=").append(Core.heapSize())
+        append("  Dropped events=").append(Core.droppedEvents())
+        append("\nRuntime=").append(enabled(Core.portValue("runtime") != null))
+        append("  Notification=").append(enabled(Core.portValue("notifications") != null))
+        append("  Projection=").append(enabled(Core.portValue("projection") != null))
+        append("  Accessibility=").append(enabled(Core.portValue("accessibility") != null))
+        append("\nKotlin reflection dependency=").append(if (BuildConfig.HAS_KOTLIN_REFLECT) "included" else "excluded")
+    }
+
+    private fun diagnosticReport(): String = buildString {
+        appendLine("HTML Realizer J native diagnostics")
+        appendLine(nativeStatus())
+        appendLine("Document=${Core.documentLabel()}")
+        appendLine("Cut HTML Internet=${onOff(policy.cutHtmlInternet)}")
+        appendLine("Exception hosts=${policy.domainText().replace('\n', ',')}")
+        appendLine("Blacklist=${policy.ruleText(RuleDecision.BLACK).replace('\n', ',')}")
+        appendLine("Graylist=${policy.ruleText(RuleDecision.GRAY).replace('\n', ',')}")
+        appendLine("Whitelist=${policy.ruleText(RuleDecision.WHITE).replace('\n', ',')}")
+        appendLine()
+        append(DebugLog.report())
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        Core.event("activity.intent", 0, intent)
+    }
+
+    @Deprecated("Activity result compatibility portal")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        when (requestCode) {
+            CapabilityFacade.REQUEST_PROJECTION -> CapabilityFacade.receiveProjectionConsent(
+                this, resultCode, data
+            )
+            REQUEST_EXPORT_LOG -> if (resultCode == RESULT_OK && data?.data != null) {
+                runCatching {
+                    contentResolver.openOutputStream(data.data!!)?.bufferedWriter()?.use {
+                        writer -> writer.write(diagnosticReport())
+                    } ?: error("No writable document stream")
+                }.onSuccess {
+                    Toast.makeText(this, "Diagnostic log exported", Toast.LENGTH_SHORT).show()
+                }.onFailure {
+                    DebugLog.add("EXPORT", "diagnostic export failed", it)
+                    Toast.makeText(this, "Export failed: ${it.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+            else -> Core.event("activity.result", requestCode, arrayOf(resultCode, data))
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        Core.event("permission.result", requestCode, arrayOf<Any>(permissions, grantResults))
+        if (requestCode == REQUEST_RUNTIME_PERMISSIONS) {
+            val denied = permissions.filterIndexed { index, _ ->
+                grantResults.getOrNull(index) != PackageManager.PERMISSION_GRANTED
+            }
+            Toast.makeText(
+                this,
+                if (denied.isEmpty()) "Selected permissions granted" else "Denied: ${denied.joinToString()}",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    override fun onDestroy() {
+        if (::frame.isInitialized) Core.port("frame", frame, live = false)
+        Core.detach(this, isChangingConfigurations)
+        DebugLog.add("ACTIVITY", "destroyed changing=$isChangingConfigurations")
+        super.onDestroy()
+    }
+
+    private fun onOff(value: Boolean) = if (value) "ON" else "OFF"
+    private fun enabled(value: Boolean) = if (value) "enabled" else "disabled"
+
+    companion object {
+        private const val REQUEST_EXPORT_LOG = 4901
+        private const val REQUEST_RUNTIME_PERMISSIONS = 4902
+    }
+}
+===== END FILE: app/src/main/java/a/htmlapprealizer/Main.kt =====
+
+===== BEGIN FILE: app/src/main/java/a/htmlapprealizer/Policy.kt =====
+package a.htmlapprealizer
+
+import android.app.AlertDialog
+import android.content.Context
+import android.content.SharedPreferences
+import android.os.Looper
+import android.util.Log
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+
+object DebugLog {
+    private const val LIMIT = 500
+    private val entries = ArrayDeque<String>()
+    private val clock = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US)
+
+    @Synchronized fun add(area: String, message: String, error: Throwable? = null) {
+        val detail = buildString {
+            append(clock.format(Date())).append(' ').append(area).append(' ').append(message)
+            error?.let { append(" | ").append(it.javaClass.name).append(": ").append(it.message.orEmpty()) }
+        }
+        entries.addLast(detail)
+        while (entries.size > LIMIT) entries.removeFirst()
+        if (error == null) Log.d("HTMLRealizerJ", "$area: $message")
+        else Log.e("HTMLRealizerJ", "$area: $message", error)
+    }
+
+    @Synchronized fun report(): String = entries.joinToString("\n")
+    @Synchronized fun clear() = entries.clear()
+}
+
+data class BridgeRequest(
+    val engine: String,
+    val operation: String,
+    val className: String,
+    val member: String,
+    val signature: String
+) {
+    private val normalizedClass = className.trim().lowercase(Locale.ROOT)
+    val packageName: String = normalizedClass.substringBeforeLast('.', "")
+    val fullText: String = "$engine $operation $className $member $signature".lowercase(Locale.ROOT)
+
+    fun scopes(): List<String> = buildList {
+        add("signature:${signature.trim().lowercase(Locale.ROOT)}")
+        if (member.isNotBlank()) add("member:$normalizedClass#${member.trim().lowercase(Locale.ROOT)}")
+        add("class:$normalizedClass")
+        if (packageName.isNotBlank()) add("package:$packageName")
+        add("all")
+    }.distinct()
+}
+
+enum class RuleDecision { BLACK, WHITE, GRAY, UNMATCHED }
+
+object PolicyMatcher {
+    fun normalizeRule(raw: String): String {
+        val rule = raw.trim().lowercase(Locale.ROOT)
+        if (rule == "*") return "all"
+        if (rule == "all") return rule
+        return if (rule.substringBefore(':') in setOf("package", "class", "member", "signature", "legacy"))
+            rule else "legacy:$rule"
+    }
+
+    fun matches(rule: String, request: BridgeRequest): Boolean {
+        val normalized = normalizeRule(rule)
+        if (normalized == "all") return true
+        if (normalized.startsWith("legacy:")) {
+            val needle = normalized.removePrefix("legacy:")
+            return needle.isNotEmpty() && request.fullText.contains(needle)
+        }
+        if (normalized.startsWith("package:")) {
+            val allowed = normalized.removePrefix("package:").trimEnd('.')
+            return request.packageName == allowed || request.packageName.startsWith("$allowed.")
+        }
+        return normalized in request.scopes()
+    }
+
+    fun decide(
+        request: BridgeRequest,
+        black: Collection<String>,
+        gray: Collection<String>,
+        white: Collection<String>
+    ): RuleDecision = when {
+        black.any { matches(it, request) } -> RuleDecision.BLACK
+        white.any { matches(it, request) } -> RuleDecision.WHITE
+        gray.any { matches(it, request) } -> RuleDecision.GRAY
+        else -> RuleDecision.UNMATCHED
+    }
+}
+
+class PolicyStore private constructor(context: Context) {
+    private val preferences: SharedPreferences =
+        context.applicationContext.getSharedPreferences("Z", Context.MODE_PRIVATE)
+
+    @Volatile var bridgeEnabled = preferences.getBoolean(KEY_BRIDGE, false)
+        private set
+    @Volatile var sandboxEnabled = preferences.getBoolean(KEY_SANDBOX, true)
+        private set
+    @Volatile var password = preferences.getString(KEY_PASSWORD, "").orEmpty()
+        private set
+    @Volatile var cutHtmlInternet = preferences.getBoolean(KEY_NET_CUT, false)
+        private set
+    @Volatile var visibilityMode = preferences.getInt(KEY_VISIBILITY, 0)
+        private set
+
+    val black = linkedSetOf<String>()
+    val gray = linkedSetOf<String>()
+    val white = linkedSetOf<String>()
+    val domainExceptions = linkedSetOf<String>()
+
+    init {
+        migrateLegacyRules()
+        replace(black, preferences.getString(KEY_BLACK, "").orEmpty())
+        replace(gray, preferences.getString(KEY_GRAY, "").orEmpty())
+        replace(white, preferences.getString(KEY_WHITE, "").orEmpty())
+        replace(domainExceptions, preferences.getString(KEY_DOMAINS, "").orEmpty(), normalize = false)
+    }
+
+    @Synchronized fun setBridge(value: Boolean) {
+        bridgeEnabled = value
+        preferences.edit().putBoolean(KEY_BRIDGE, value).apply()
+        Core.revoke(if (value) "bridge-enabled" else "bridge-disabled")
+    }
+
+    @Synchronized fun setSandbox(value: Boolean) {
+        sandboxEnabled = value
+        preferences.edit().putBoolean(KEY_SANDBOX, value).apply()
+        Core.revoke("sandbox-changed")
+    }
+
+    @Synchronized fun setPassword(value: String) {
+        password = value
+        preferences.edit().putString(KEY_PASSWORD, value).apply()
+        Core.revoke("password-changed")
+    }
+
+    @Synchronized fun setCutHtmlInternet(value: Boolean) {
+        cutHtmlInternet = value
+        preferences.edit().putBoolean(KEY_NET_CUT, value).apply()
+    }
+
+    @Synchronized fun setVisibilityMode(value: Int) {
+        visibilityMode = value.coerceIn(0, 3)
+        with(preferences.edit()) {
+            if (visibilityMode == 3) putInt(KEY_VISIBILITY, 3) else remove(KEY_VISIBILITY)
+            apply()
+        }
+    }
+
+    @Synchronized fun setRules(kind: RuleDecision, value: String) {
+        val target = when (kind) {
+            RuleDecision.BLACK -> black
+            RuleDecision.GRAY -> gray
+            RuleDecision.WHITE -> white
+            RuleDecision.UNMATCHED -> return
+        }
+        replace(target, value)
+        saveRules(kind)
+    }
+
+    @Synchronized fun addRule(kind: RuleDecision, value: String) {
+        val target = when (kind) {
+            RuleDecision.BLACK -> black
+            RuleDecision.GRAY -> gray
+            RuleDecision.WHITE -> white
+            RuleDecision.UNMATCHED -> return
+        }
+        target += PolicyMatcher.normalizeRule(value)
+        saveRules(kind)
+    }
+
+    @Synchronized fun setDomains(value: String) {
+        replace(domainExceptions, value, normalize = false)
+        preferences.edit().putString(KEY_DOMAINS, domainExceptions.joinToString("\n")).apply()
+    }
+
+    @Synchronized fun ruleText(kind: RuleDecision): String = when (kind) {
+        RuleDecision.BLACK -> black
+        RuleDecision.GRAY -> gray
+        RuleDecision.WHITE -> white
+        RuleDecision.UNMATCHED -> emptySet()
+    }.joinToString("\n")
+
+    @Synchronized fun domainText(): String = domainExceptions.joinToString("\n")
+
+    private fun replace(target: MutableSet<String>, text: String, normalize: Boolean = true) {
+        target.clear()
+        text.split(',', '\n').map(String::trim).filter(String::isNotEmpty).forEach {
+            target += if (normalize) PolicyMatcher.normalizeRule(it) else HostPolicy.normalizeHost(it).orEmpty()
+        }
+        target.remove("")
+    }
+
+    private fun saveRules(kind: RuleDecision) {
+        val (key, values) = when (kind) {
+            RuleDecision.BLACK -> KEY_BLACK to black
+            RuleDecision.GRAY -> KEY_GRAY to gray
+            RuleDecision.WHITE -> KEY_WHITE to white
+            RuleDecision.UNMATCHED -> return
+        }
+        preferences.edit().putString(key, values.joinToString("\n")).apply()
+    }
+
+    private fun migrateLegacyRules() {
+        if (preferences.getBoolean(KEY_MIGRATED, false)) return
+        val editor = preferences.edit()
+        listOf("0" to KEY_BLACK, "1" to KEY_GRAY, "2" to KEY_WHITE).forEach { (old, current) ->
+            val migrated = preferences.getString(old, "").orEmpty()
+                .split(',').map(String::trim).filter(String::isNotEmpty)
+                .joinToString("\n") { "legacy:$it" }
+            if (migrated.isNotEmpty() && preferences.getString(current, "").isNullOrEmpty())
+                editor.putString(current, migrated)
+        }
+        editor.putBoolean(KEY_MIGRATED, true).apply()
+    }
+
+    companion object {
+        private const val KEY_BRIDGE = "J.bridge"
+        private const val KEY_SANDBOX = "S"
+        private const val KEY_PASSWORD = "W"
+        private const val KEY_NET_CUT = "N"
+        private const val KEY_VISIBILITY = "J.visibility"
+        private const val KEY_BLACK = "J.policy.black"
+        private const val KEY_GRAY = "J.policy.gray"
+        private const val KEY_WHITE = "J.policy.white"
+        private const val KEY_DOMAINS = "D"
+        private const val KEY_MIGRATED = "J.policy.migrated"
+        @Volatile private var instance: PolicyStore? = null
+
+        fun get(context: Context): PolicyStore = instance ?: synchronized(this) {
+            instance ?: PolicyStore(context).also { instance = it }
+        }
+    }
+}
+
+enum class Authorization { ALLOW, DENY }
+
+object PolicyEngine {
+    fun authorize(request: BridgeRequest): Authorization {
+        val store = Core.policyOrNull() ?: return deny(request, "policy-unavailable")
+        if (!store.bridgeEnabled) return deny(request, "bridge-off")
+        if (store.sandboxEnabled) return deny(request, "sandbox-on")
+        if (!Core.isAuthenticated()) return deny(request, "authentication-required")
+
+        val decision = synchronized(store) {
+            PolicyMatcher.decide(request, store.black, store.gray, store.white)
+        }
+        return when (decision) {
+            RuleDecision.BLACK -> deny(request, "blacklist")
+            RuleDecision.WHITE -> allow(request, "whitelist")
+            RuleDecision.GRAY, RuleDecision.UNMATCHED -> prompt(request, decision)
+        }
+    }
+
+    private fun prompt(request: BridgeRequest, source: RuleDecision): Authorization {
+        val activity = Core.currentActivity() ?: return deny(request, "no-native-host")
+        if (Looper.myLooper() == Looper.getMainLooper()) return deny(request, "prompt-on-main-thread")
+        val latch = CountDownLatch(1)
+        var result = Authorization.DENY
+        val scopes = request.scopes().toTypedArray()
+        var selected = 0
+        activity.runOnUiThread {
+            if (activity.isFinishing || activity.isDestroyed) {
+                latch.countDown()
+                return@runOnUiThread
+            }
+            AlertDialog.Builder(activity)
+                .setTitle("Reflection request (${request.engine})")
+                .setMessage("${request.operation}: ${request.className}#${request.member}\n${request.signature}")
+                .setSingleChoiceItems(scopes, selected) { _, which -> selected = which }
+                .setPositiveButton("Allow once") { _, _ ->
+                    result = Authorization.ALLOW
+                    latch.countDown()
+                }
+                .setNeutralButton("Always allow") { _, _ ->
+                    Core.policyOrNull()?.addRule(RuleDecision.WHITE, scopes[selected])
+                    result = Authorization.ALLOW
+                    latch.countDown()
+                }
+                .setNegativeButton("Block") { _, _ ->
+                    Core.policyOrNull()?.addRule(RuleDecision.BLACK, scopes[selected])
+                    latch.countDown()
+                }
+                .setOnCancelListener { latch.countDown() }
+                .setOnDismissListener { latch.countDown() }
+                .show()
+        }
+        if (!latch.await(120, TimeUnit.SECONDS)) return deny(request, "prompt-timeout")
+        return if (result == Authorization.ALLOW) allow(request, "${source.name.lowercase()}-prompt")
+        else deny(request, "${source.name.lowercase()}-prompt")
+    }
+
+    private fun allow(request: BridgeRequest, reason: String): Authorization {
+        DebugLog.add("POLICY", "ALLOW $reason ${request.fullText}")
+        return Authorization.ALLOW
+    }
+
+    private fun deny(request: BridgeRequest, reason: String): Authorization {
+        DebugLog.add("POLICY", "DENY $reason ${request.fullText}")
+        return Authorization.DENY
+    }
+}
+===== END FILE: app/src/main/java/a/htmlapprealizer/Policy.kt =====
+
+===== BEGIN FILE: app/src/main/java/a/htmlapprealizer/Portals.kt =====
+package a.htmlapprealizer
+
+import android.app.Activity
+import android.app.AlarmManager
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.database.ContentObserver
+import android.media.projection.MediaProjection
+import android.media.projection.MediaProjectionManager
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
+import android.os.FileObserver
+import android.os.Handler
+import android.os.IBinder
+import android.os.Looper
+import android.os.PowerManager
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.provider.Settings
+import android.service.notification.NotificationListenerService
+import android.service.notification.StatusBarNotification
+import android.webkit.GeolocationPermissions
+import android.webkit.PermissionRequest
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
+
+object BrowserPortal : WebChromeClient() {
+    override fun onPermissionRequest(request: PermissionRequest?) {
+        if (request != null && !Core.portal("web.permission", request)) request.deny()
+    }
+
+    override fun onPermissionRequestCanceled(request: PermissionRequest?) {
+        request?.let { Core.portal("web.permission.cancelled", it) }
+    }
+
+    override fun onShowFileChooser(
+        webView: WebView?,
+        filePathCallback: ValueCallback<Array<Uri>>?,
+        fileChooserParams: FileChooserParams?
+    ): Boolean = filePathCallback != null && Core.portal(
+        "web.file", arrayOf(filePathCallback, fileChooserParams)
+    )
+
+    override fun onGeolocationPermissionsShowPrompt(
+        origin: String?, callback: GeolocationPermissions.Callback?
+    ) {
+        if (callback != null && !Core.portal("web.geolocation", arrayOf(origin, callback)))
+            callback.invoke(origin, false, false)
+    }
+
+    override fun onGeolocationPermissionsHidePrompt() {
+        Core.portal("web.geolocation.cancelled", null)
+    }
+}
+
+object ForegroundNotice {
+    private const val CHANNEL_RUNTIME = "html_realizer_runtime"
+    private const val CHANNEL_EVENTS = "html_realizer_events"
+
+    fun runtime(context: Context, projection: Boolean = false): Notification {
+        val channel = if (projection) "html_realizer_projection" else CHANNEL_RUNTIME
+        val name = if (projection) "HTML Realizer screen capture" else "HTML Realizer runtime"
+        context.getSystemService(NotificationManager::class.java).createNotificationChannel(
+            NotificationChannel(channel, name, NotificationManager.IMPORTANCE_LOW)
+        )
+        val open = PendingIntent.getActivity(
+            context, 0, Intent(context, Main::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        return Notification.Builder(context, channel)
+            .setSmallIcon(android.R.drawable.stat_notify_sync)
+            .setContentTitle(if (projection) "HTML Realizer capture active" else "HTML Realizer runtime active")
+            .setContentText(if (projection) "Screen/app-window capture is active" else "User-authored HTML/JavaScript is active")
+            .setContentIntent(open)
+            .setCategory(Notification.CATEGORY_SERVICE)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setShowWhen(false)
+            .build()
+    }
+
+    fun event(context: Context, id: Int, title: String, text: String) {
+        val manager = context.getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(
+            NotificationChannel(CHANNEL_EVENTS, "HTML Realizer events", NotificationManager.IMPORTANCE_DEFAULT)
+        )
+        val open = PendingIntent.getActivity(
+            context, id, Intent(context, Main::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        manager.notify(
+            id,
+            Notification.Builder(context, CHANNEL_EVENTS)
+                .setSmallIcon(android.R.drawable.stat_notify_more)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setContentIntent(open)
+                .setAutoCancel(true)
+                .build()
+        )
+    }
+}
+
+class RuntimeService : Service() {
+    @Volatile private var active = false
+
+    override fun onCreate() {
+        super.onCreate()
+        startForeground(NOTIFICATION_ID, ForegroundNotice.runtime(this))
+        Core.ensure(this)
+        Core.port("runtime", this)
+        active = true
+        DebugLog.add("RUNTIME", "foreground service created")
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_STOP) {
+            stopRuntime("explicit-stop")
+            return START_NOT_STICKY
+        }
+        Core.event("runtime.start", startId, intent)
+        return START_NOT_STICKY
+    }
+
+    fun stopRuntime(reason: String = "bridge-stop") {
+        if (!active) return
+        active = false
+        Core.port("runtime", this, live = false, deferOwnerCheck = true)
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+        DebugLog.add("RUNTIME", reason)
+    }
+
+    override fun onTimeout(startId: Int, foregroundServiceType: Int) {
+        Core.event("runtime.timeout", startId, foregroundServiceType)
+        stopRuntime("system-timeout")
+    }
+
+    override fun onDestroy() {
+        Core.port("runtime", this, live = false, deferOwnerCheck = true)
+        if (active) stopForeground(STOP_FOREGROUND_REMOVE)
+        active = false
+        super.onDestroy()
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    companion object {
+        const val ACTION_STOP = "a.htmlapprealizer.STOP_RUNTIME"
+        private const val NOTIFICATION_ID = 1101
+    }
+}
+
+class NotificationPortal : NotificationListenerService() {
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        Core.port("notifications", this)
+    }
+
+    override fun onListenerDisconnected() {
+        Core.port("notifications", this, live = false)
+        super.onListenerDisconnected()
+    }
+
+    override fun onNotificationPosted(value: StatusBarNotification?, rankingMap: RankingMap?) {
+        value?.let {
+            Core.event("notification.posted", it.id, it)
+            rankingMap?.let { ranking -> Core.event("notification.posted.ranking", it.id, ranking) }
+        }
+    }
+
+    override fun onNotificationRemoved(
+        value: StatusBarNotification?, rankingMap: RankingMap?, reason: Int
+    ) {
+        value?.let {
+            Core.event("notification.removed", it.id, it)
+            Core.event("notification.removed.detail", it.id, arrayOf(rankingMap, reason))
+        }
+    }
+
+    override fun onNotificationRankingUpdate(rankingMap: RankingMap?) {
+        rankingMap?.let { Core.event("notification.ranking", 0, it) }
+    }
+
+    override fun onListenerHintsChanged(hints: Int) { Core.event("notification.hints", hints) }
+    override fun onInterruptionFilterChanged(interruptionFilter: Int) {
+        Core.event("notification.filter", interruptionFilter)
+    }
+
+    override fun onDestroy() {
+        Core.port("notifications", this, live = false)
+        super.onDestroy()
+    }
+}
+
+class ProjectionService : Service() {
+    private val main = Handler(Looper.getMainLooper())
+    private var projection: MediaProjection? = null
+    private var releasing = false
+
+    override fun onCreate() {
+        super.onCreate()
+        startForeground(NOTIFICATION_ID, ForegroundNotice.runtime(this, projection = true))
+        Core.port("projectionService", this)
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_STOP) {
+            stopProjection("explicit-stop")
+            return START_NOT_STICKY
+        }
+        if (projection != null) {
+            Core.event("projection.busy", startId, projection)
+            return START_NOT_STICKY
+        }
+        val resultCode = intent?.getIntExtra(EXTRA_RESULT_CODE, Activity.RESULT_CANCELED)
+            ?: Activity.RESULT_CANCELED
+        @Suppress("DEPRECATION")
+        val consent = intent?.getParcelableExtra<Intent>(EXTRA_CONSENT)
+        if (resultCode != Activity.RESULT_OK || consent == null) {
+            Core.event("projection.error", startId, "E:CONSENT")
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        val created = try {
+            getSystemService(MediaProjectionManager::class.java).getMediaProjection(resultCode, consent)
+        } catch (error: Throwable) {
+            DebugLog.add("PROJECTION", "consent rejected", error)
+            Core.event("projection.error", startId, error)
+            stopSelf()
+            return START_NOT_STICKY
+        } ?: run {
+            Core.event("projection.error", startId, "E:PROJECTION")
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        created.registerCallback(object : MediaProjection.Callback() {
+            override fun onStop() {
+                main.post {
+                    if (projection === created) {
+                        projection = null
+                        Core.port("projection", created, live = false)
+                        if (!releasing) stopSelf()
+                    }
+                }
+            }
+
+            override fun onCapturedContentResize(width: Int, height: Int) {
+                Core.event("projection.resize", 0, intArrayOf(width, height))
+            }
+
+            override fun onCapturedContentVisibilityChanged(isVisible: Boolean) {
+                Core.event("projection.visibility", 0, isVisible)
+            }
+        }, main)
+        projection = created
+        Core.port("projection", created)
+        DebugLog.add("PROJECTION", "projection started")
+        return START_NOT_STICKY
+    }
+
+    fun stopProjection(reason: String = "bridge-stop") {
+        val current = projection
+        projection = null
+        releasing = true
+        if (current != null) {
+            Core.port("projection", current, live = false)
+            runCatching { current.stop() }
+        }
+        releasing = false
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+        DebugLog.add("PROJECTION", reason)
+    }
+
+    override fun onDestroy() {
+        val current = projection
+        projection = null
+        if (current != null) {
+            Core.port("projection", current, live = false)
+            runCatching { current.stop() }
+        }
+        Core.port("projectionService", this, live = false)
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        super.onDestroy()
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    companion object {
+        const val ACTION_STOP = "a.htmlapprealizer.STOP_PROJECTION"
+        const val EXTRA_RESULT_CODE = "resultCode"
+        const val EXTRA_CONSENT = "consent"
+        private const val NOTIFICATION_ID = 1102
+    }
+}
+
+object CapabilityFacade {
+    const val REQUEST_PROJECTION = 4801
+
+    private fun gate(operation: String, className: String = "android.app.Application"): String? {
+        Core.validateEpoch()?.let { return it }
+        val request = BridgeRequest("portal", operation, className, operation, "portal:$operation")
+        return if (Core.authorized(request)) null else "E:POLICY"
+    }
+
+    fun manifest(): String {
+        gate("manifest")?.let { return it }
+        val context = Core.portValue("app") as? Context ?: return "E:PORT"
+        return runCatching {
+            val info = context.packageManager.getPackageInfo(
+                context.packageName, PackageManagerFlags.permissions()
+            )
+            val result = JSONObject()
+                .put("package", info.packageName)
+                .put("version", info.versionName)
+                .put("requestedPermissions", JSONArray(info.requestedPermissions?.toList().orEmpty()))
+            "V$result"
+        }.getOrElse { Core.bridgeFailure(it) }
+    }
+
+    fun resources(): String {
+        gate("resources", "android.content.res.Resources")?.let { return it }
+        val context = Core.portValue("app") as? Context ?: return "E:PORT"
+        return Core.keep(context.resources)
+    }
+
+    fun root(): String {
+        gate("root", "android.view.View")?.let { return it }
+        val root = Core.currentActivity()?.window?.decorView?.rootView
+            ?: GlobalService.instance?.rootInActiveWindow
+            ?: return "E:PORT"
+        return Core.keep(root)
+    }
+
+    fun requestPermission(permission: String, requestCode: Int): String {
+        gate("permission:$permission", "android.app.Activity")?.let { return it }
+        val activity = Core.currentActivity() ?: return "E:UI"
+        activity.runOnUiThread { activity.requestPermissions(arrayOf(permission), requestCode) }
+        return "W$requestCode"
+    }
+
+    fun stop(portal: String): String {
+        gate("stop:$portal", "android.app.Service")?.let { return it }
+        return when (portal.lowercase()) {
+            "runtime" -> {
+                (Core.portValue("runtime") as? RuntimeService)?.stopRuntime() ?: return "E:PORT"
+                "V"
+            }
+            "projection" -> {
+                (Core.portValue("projectionService") as? ProjectionService)?.stopProjection()
+                    ?: return "E:PORT"
+                "V"
+            }
+            "overlay" -> overlayClose()
+            else -> "E:PORT"
+        }
+    }
+
+    fun overlay(html: String, mode: String, configuration: String): String {
+        gate("overlay", "android.view.WindowManager")?.let { return it }
+        return GlobalService.instance?.openOverlay(html, mode, configuration) ?: "E:ACCESSIBILITY"
+    }
+
+    fun overlayEval(script: String): String {
+        gate("overlay-eval", "android.webkit.WebView")?.let { return it }
+        return GlobalService.instance?.evaluateOverlay(script) ?: "E:ACCESSIBILITY"
+    }
+
+    fun overlayClose(): String {
+        gate("overlay-close", "android.view.WindowManager")?.let { return it }
+        return if (GlobalService.instance?.closeOverlay("bridge-close") == true) "V" else "E:ACCESSIBILITY"
+    }
+
+    fun vibrate(durationMs: Long): String {
+        gate("vibrate", "android.os.Vibrator")?.let { return it }
+        val context = Core.portValue("app") as? Context ?: return "E:PORT"
+        return runCatching {
+            val effect = VibrationEffect.createOneShot(durationMs.coerceIn(1, 60_000), VibrationEffect.DEFAULT_AMPLITUDE)
+            if (Build.VERSION.SDK_INT >= 31)
+                context.getSystemService(VibratorManager::class.java).defaultVibrator.vibrate(effect)
+            else @Suppress("DEPRECATION") (context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator).vibrate(effect)
+            "V"
+        }.getOrElse { Core.bridgeFailure(it) }
+    }
+
+    fun notify(id: Int, title: String, text: String): String {
+        gate("notify", "android.app.NotificationManager")?.let { return it }
+        val context = Core.portValue("app") as? Context ?: return "E:PORT"
+        return runCatching { ForegroundNotice.event(context, id, title, text); "V" }
+            .getOrElse { Core.bridgeFailure(it) }
+    }
+
+    fun alarm(delayMs: Long, title: String, text: String, exact: Boolean): String {
+        gate("alarm", "android.app.AlarmManager")?.let { return it }
+        val context = Core.portValue("app") as? Context ?: return "E:PORT"
+        val manager = context.getSystemService(AlarmManager::class.java)
+        val requestCode = ((System.currentTimeMillis() xor delayMs) and 0x7fffffff).toInt()
+        val pending = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            Intent(context, AlarmPortal::class.java)
+                .putExtra("id", requestCode)
+                .putExtra("title", title)
+                .putExtra("text", text),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val trigger = System.currentTimeMillis() + delayMs.coerceAtLeast(0)
+        val usedExact = exact && (Build.VERSION.SDK_INT < 31 || manager.canScheduleExactAlarms())
+        if (usedExact) manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pending)
+        else manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pending)
+        return if (usedExact) "VEXACT" else "VINEXACT"
+    }
+
+    fun startProjectionConsent(activity: Main) {
+        val manager = activity.getSystemService(MediaProjectionManager::class.java)
+        activity.startActivityForResult(manager.createScreenCaptureIntent(), REQUEST_PROJECTION)
+    }
+
+    fun receiveProjectionConsent(context: Context, resultCode: Int, data: Intent?) {
+        if (resultCode != Activity.RESULT_OK || data == null) {
+            DebugLog.add("PROJECTION", "user denied or cancelled consent")
+            Core.event("projection.error", REQUEST_PROJECTION, "E:CONSENT")
+            return
+        }
+        context.startForegroundService(
+            Intent(context, ProjectionService::class.java)
+                .putExtra(ProjectionService.EXTRA_RESULT_CODE, resultCode)
+                .putExtra(ProjectionService.EXTRA_CONSENT, data)
+        )
+    }
+
+    fun accessibilityEnabled(context: Context): Boolean =
+        Settings.Secure.getInt(context.contentResolver, Settings.Secure.ACCESSIBILITY_ENABLED, 0) == 1 &&
+            Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+                .orEmpty().contains(context.packageName, ignoreCase = true)
+
+    fun notificationAccessEnabled(context: Context): Boolean =
+        Settings.Secure.getString(
+            context.contentResolver, "enabled_notification_listeners"
+        ).orEmpty().contains(context.packageName, ignoreCase = true)
+
+    fun exactAlarmEnabled(context: Context): Boolean = Build.VERSION.SDK_INT < 31 ||
+        context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
+}
+
+private object PackageManagerFlags {
+    fun permissions(): Int = android.content.pm.PackageManager.GET_PERMISSIONS
+}
+
+class AlarmPortal : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val id = intent.getIntExtra("id", 1200)
+        val title = intent.getStringExtra("title").orEmpty().ifBlank { "HTML Realizer condition" }
+        val text = intent.getStringExtra("text").orEmpty()
+        runCatching { ForegroundNotice.event(context, id, title, text) }
+            .onFailure { DebugLog.add("ALARM", "notification failed", it) }
+        Core.event("alarm", id, intent)
+    }
+}
+
+class BroadcastCompletion @JvmOverloads constructor(
+    private val pending: BroadcastReceiver.PendingResult,
+    timeoutMs: Long = 9000
+) {
+    private val completed = AtomicBoolean()
+    private val main = Handler(Looper.getMainLooper())
+    private val expiry = Runnable { finish() }
+    init { main.postDelayed(expiry, timeoutMs.coerceAtLeast(1)) }
+    fun raw(): BroadcastReceiver.PendingResult = pending
+    fun finish(): Boolean {
+        if (!completed.compareAndSet(false, true)) return false
+        main.removeCallbacks(expiry)
+        runCatching { pending.finish() }
+        return true
+    }
+}
+
+class BroadcastEvents @JvmOverloads constructor(@JvmField var id: Int = 0) : BroadcastReceiver() {
+    private val born = Core.currentEpoch()
+    override fun onReceive(context: Context?, intent: Intent?) {
+        val completion = BroadcastCompletion(goAsync())
+        if (born == Core.currentEpoch()) Core.event("broadcast", id, arrayOf(context, intent, completion))
+        else completion.finish()
+    }
+}
+
+class ContentEvents @JvmOverloads constructor(
+    @JvmField var id: Int = 0
+) : ContentObserver(Handler(Looper.getMainLooper())) {
+    private val born = Core.currentEpoch()
+    override fun onChange(selfChange: Boolean, uri: Uri?, flags: Int) {
+        if (born == Core.currentEpoch()) Core.event("content", id, arrayOf(selfChange, uri, flags))
+    }
+
+    override fun onChange(selfChange: Boolean, uris: Collection<Uri>, flags: Int) {
+        if (born == Core.currentEpoch()) Core.event("content", id, arrayOf(selfChange, uris, flags))
+    }
+}
+
+class FileEvents @JvmOverloads constructor(
+    path: String,
+    mask: Int = FileObserver.ALL_EVENTS,
+    @JvmField var id: Int = 0
+) : FileObserver(File(path), mask) {
+    private val born = Core.currentEpoch()
+    override fun onEvent(event: Int, path: String?) {
+        if (born == Core.currentEpoch()) Core.event("file", id, arrayOf<Any?>(event, path))
+    }
+}
+===== END FILE: app/src/main/java/a/htmlapprealizer/Portals.kt =====
+
+===== BEGIN FILE: app/src/test/java/a/htmlapprealizer/DefaultEditorTest.kt =====
+package a.htmlapprealizer
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class DefaultEditorTest {
+    @Test fun defaultEditorIsConstitutionByteForByte() {
+        val required = "<!DOCTYPE html><title>HTML Realizer</title><style>body{margin:0;padding:4px;background:#111;font-family:monospace}div{min-height:40vh;background:#222;color:#eee;border:solid #444;padding:8px;white-space:pre-wrap;margin-bottom:4px;overflow:auto}button{border:0;background:#058;color:#fff;width:100%;height:5vh;font-size:2vh}</style><div id=i contenteditable=\"plaintext-only\" oninput=\"c.textContent=i.textContent.length\"></div><button onclick=\"var code=i.textContent;document.open();document.write(code);document.close()\">Realize (<b id=c>0</b> characters)</button>\n"
+        assertEquals(required.toByteArray(Charsets.UTF_8).toList(), Core.DEFAULT_EDITOR.toByteArray(Charsets.UTF_8).toList())
+    }
+}
+===== END FILE: app/src/test/java/a/htmlapprealizer/DefaultEditorTest.kt =====
+
+===== BEGIN FILE: app/src/test/java/a/htmlapprealizer/PolicyMatcherTest.kt =====
+package a.htmlapprealizer
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+
+class PolicyMatcherTest {
+    private val request = BridgeRequest(
+        engine = "java",
+        operation = "method",
+        className = "android.content.Intent",
+        member = "putExtra",
+        signature = "public android.content.Intent android.content.Intent.putExtra(java.lang.String,int)"
+    )
+
+    @Test fun blacklistWinsOverWhitelist() {
+        assertEquals(
+            RuleDecision.BLACK,
+            PolicyMatcher.decide(
+                request,
+                black = setOf("member:android.content.intent#putextra"),
+                gray = emptySet(),
+                white = setOf("class:android.content.intent")
+            )
+        )
+    }
+
+    @Test fun packageRuleHonorsBoundaries() {
+        assertTrue(PolicyMatcher.matches("package:android.content", request))
+        assertFalse(PolicyMatcher.matches("package:android.con", request))
+        assertFalse(PolicyMatcher.matches("package:ndroid.content", request))
+    }
+
+    @Test fun unmatchedAndGrayBothPromptButRemainDistinct() {
+        assertEquals(
+            RuleDecision.GRAY,
+            PolicyMatcher.decide(request, emptySet(), setOf("class:android.content.intent"), emptySet())
+        )
+        assertEquals(
+            RuleDecision.UNMATCHED,
+            PolicyMatcher.decide(request, emptySet(), emptySet(), emptySet())
+        )
+    }
+
+    @Test fun unscopedRulesAreExplicitLegacySubstringRules() {
+        assertEquals("legacy:putextra", PolicyMatcher.normalizeRule("putExtra"))
+        assertTrue(PolicyMatcher.matches("legacy:putextra", request))
+    }
+}
+===== END FILE: app/src/test/java/a/htmlapprealizer/PolicyMatcherTest.kt =====
+
